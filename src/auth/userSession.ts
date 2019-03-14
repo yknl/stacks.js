@@ -1,3 +1,5 @@
+// @ts-ignore: Could not find a declaration file for module
+import { TokenSigner, SECP256K1Client } from 'jsontokens'
 
 import queryString from 'query-string'
 import { AppConfig } from './appConfig'
@@ -8,36 +10,48 @@ import {
   InstanceDataStore
 } from './sessionStore'
 import {
-  redirectToSignInImpl,
-  redirectToSignInWithAuthRequestImpl,
-  handlePendingSignInImpl,
-  loadUserDataImpl
+  detectProtocolLaunch,
+  UserData
 } from './authApp'
-
 import {
-  makeAuthRequestImpl,
-  generateTransitKey
+  generateTransitKey,
+  decryptPrivateKey,
+  VERSION
 } from './authMessages'
-
 import {
-  decryptContentImpl,
-  encryptContentImpl,
-  getFileImpl,
-  putFileImpl,
-  listFilesImpl,
-  getFileUrlImpl,
   PutFileOptions,
-  GetFileOptions
+  GetFileOptions,
+  getFileSignedUnencrypted,
+  getFileContents,
+  handleSignedEncryptedContents,
+  SIGNATURE_FILE_SUFFIX,
+  getUserAppFileUrl
 } from '../storage'
-
 import {
-  nextHour
+  nextHour, isLaterVersion, hexStringToECPair, makeUUID4
 } from '../utils'
 import {
   MissingParameterError,
-  InvalidStateError
+  InvalidStateError,
+  LoginFailedError
 } from '../errors'
 import { Logger } from '../logger'
+import { decryptECIES, encryptECIES, signECDSA } from '../encryption/ec'
+import { getPublicKeyFromPrivate, publicKeyToAddress } from '../keys'
+import { 
+  getOrSetLocalGaiaHubConnection, uploadToGaiaHub, 
+  setLocalGaiaHubConnection, GaiaHubConfig, getFullReadUrl 
+} from '../storage/hub'
+import { 
+  DEFAULT_BLOCKSTACK_HOST, NAME_LOOKUP_PATH, 
+  BLOCKSTACK_DEFAULT_GAIA_HUB_URL 
+} from './authConstants'
+import { config } from '../config'
+import { 
+  decodeToken, verifyAuthResponse, 
+  getAddressFromDID, extractProfile, makeDIDFromAddress 
+} from '../index'
+
 
 /**
  * Represents an instance of a signed in user for a particular app.
@@ -107,7 +121,9 @@ export class UserSession {
    * @return {void}
    */
   redirectToSignIn() {
-    return redirectToSignInImpl(this)
+    const transitKey = this.generateAndStoreTransitKey()
+    const authRequest = this.makeAuthRequest(transitKey)
+    return this.redirectToSignInWithAuthRequest(authRequest)
   }
 
   /**
@@ -122,7 +138,31 @@ export class UserSession {
    * @return {void}
    */
   redirectToSignInWithAuthRequest(authRequest: string) {
-    return redirectToSignInWithAuthRequestImpl(this, authRequest)
+    let httpsURI = `${DEFAULT_BLOCKSTACK_HOST}?authRequest=${authRequest}`
+
+    if (this.appConfig
+        && this.appConfig.authenticatorURL) {
+      httpsURI = `${this.appConfig.authenticatorURL}?authRequest=${authRequest}`
+    }
+  
+    // If they're on a mobile OS, always redirect them to HTTPS site
+    if (/Android|webOS|iPhone|iPad|iPod|Opera Mini/i.test(navigator.userAgent)) {
+      Logger.info('detected mobile OS, sending to https')
+      window.location.href = httpsURI
+      return
+    }
+  
+    function successCallback() {
+      Logger.info('protocol handler detected')
+      // The detection function should open the link for us
+    }
+  
+    function failCallback() {
+      Logger.warn('protocol handler not detected')
+      window.location.href = httpsURI
+    }
+  
+    detectProtocolLaunch(authRequest, successCallback, failCallback)
   }
 
   /**
@@ -154,8 +194,36 @@ export class UserSession {
     const manifestURI = appConfig.manifestURI()
     const scopes = appConfig.scopes
     const appDomain = appConfig.appDomain
-    return makeAuthRequestImpl(transitKey, redirectURI, manifestURI,
-                               scopes, appDomain, expiresAt, extraParams)
+
+    /* Create the payload */
+    const payload = Object.assign({}, extraParams, {
+      jti: makeUUID4(),
+      iat: Math.floor(new Date().getTime() / 1000), // JWT times are in seconds
+      exp: Math.floor(expiresAt / 1000), // JWT times are in seconds
+      iss: null,
+      public_keys: [],
+      domain_name: appDomain,
+      manifest_uri: manifestURI,
+      redirect_uri: redirectURI,
+      version: VERSION,
+      do_not_include_profile: true,
+      supports_hub_url: true,
+      scopes
+    })
+
+    Logger.info(`blockstack.js: generating v${VERSION} auth request`)
+
+    /* Convert the private key to a public key to an issuer */
+    const publicKey = SECP256K1Client.derivePublicKey(transitKey)
+    payload.public_keys = [publicKey]
+    const address = publicKeyToAddress(publicKey)
+    payload.iss = makeDIDFromAddress(address)
+
+    /* Sign and return the token */
+    const tokenSigner = new TokenSigner('ES256k', transitKey)
+    const token = tokenSigner.sign(payload)
+
+    return token
   }
 
   /**
@@ -207,7 +275,119 @@ export class UserSession {
    * if handling the sign in request fails or there was no pending sign in request.
    */
   handlePendingSignIn(authResponseToken: string = this.getAuthResponseToken()) {
-    return handlePendingSignInImpl(this, authResponseToken)
+    const transitKey = this.store.getSessionData().transitKey
+    const coreNodeSessionValue = this.store.getSessionData().coreNode
+    let nameLookupURL = null
+  
+    if (!coreNodeSessionValue) {
+      const tokenPayload = decodeToken(authResponseToken).payload
+      if (isLaterVersion(tokenPayload.version, '1.3.0')
+         && tokenPayload.blockstackAPIUrl !== null && tokenPayload.blockstackAPIUrl !== undefined) {
+        // override globally
+        Logger.info(`Overriding ${config.network.blockstackAPIUrl} `
+          + `with ${tokenPayload.blockstackAPIUrl}`)
+        config.network.blockstackAPIUrl = tokenPayload.blockstackAPIUrl
+      }
+      nameLookupURL = `${config.network.blockstackAPIUrl}${NAME_LOOKUP_PATH}`
+    } else {
+      nameLookupURL = `${coreNodeSessionValue}${NAME_LOOKUP_PATH}`
+    }
+    return verifyAuthResponse(authResponseToken, nameLookupURL)
+      .then((isValid) => {
+        if (!isValid) {
+          throw new LoginFailedError('Invalid authentication response.')
+        }
+        const tokenPayload = decodeToken(authResponseToken).payload
+        // TODO: real version handling
+        let appPrivateKey = tokenPayload.private_key
+        let coreSessionToken = tokenPayload.core_token
+        if (isLaterVersion(tokenPayload.version, '1.1.0')) {
+          if (transitKey !== undefined && transitKey != null) {
+            if (tokenPayload.private_key !== undefined && tokenPayload.private_key !== null) {
+              try {
+                appPrivateKey = decryptPrivateKey(transitKey, tokenPayload.private_key)
+              } catch (e) {
+                Logger.warn('Failed decryption of appPrivateKey, will try to use as given')
+                try {
+                  hexStringToECPair(tokenPayload.private_key)
+                } catch (ecPairError) {
+                  throw new LoginFailedError('Failed decrypting appPrivateKey. Usually means'
+                                           + ' that the transit key has changed during login.')
+                }
+              }
+            }
+            if (coreSessionToken !== undefined && coreSessionToken !== null) {
+              try {
+                coreSessionToken = decryptPrivateKey(transitKey, coreSessionToken)
+              } catch (e) {
+                Logger.info('Failed decryption of coreSessionToken, will try to use as given')
+              }
+            }
+          } else {
+            throw new LoginFailedError('Authenticating with protocol > 1.1.0 requires transit'
+                                     + ' key, and none found.')
+          }
+        }
+        let hubUrl = BLOCKSTACK_DEFAULT_GAIA_HUB_URL
+        let gaiaAssociationToken
+        if (isLaterVersion(tokenPayload.version, '1.2.0')
+          && tokenPayload.hubUrl !== null && tokenPayload.hubUrl !== undefined) {
+          hubUrl = tokenPayload.hubUrl
+        }
+        if (isLaterVersion(tokenPayload.version, '1.3.0')
+          && tokenPayload.associationToken !== null 
+          && tokenPayload.associationToken !== undefined) {
+          gaiaAssociationToken = tokenPayload.associationToken
+        }
+  
+        const userData: UserData = {
+          username: tokenPayload.username,
+          profile: tokenPayload.profile,
+          email: tokenPayload.email,
+          decentralizedID: tokenPayload.iss,
+          identityAddress: getAddressFromDID(tokenPayload.iss),
+          appPrivateKey,
+          coreSessionToken,
+          authResponseToken,
+          hubUrl,
+          gaiaAssociationToken
+        }
+        const profileURL = tokenPayload.profile_url
+        if ((userData.profile === null
+           || userData.profile === undefined)
+          && profileURL !== undefined && profileURL !== null) {
+          return fetch(profileURL)
+            .then((response) => {
+              if (!response.ok) { // return blank profile if we fail to fetch
+                userData.profile = {
+                  '@type': 'Person',
+                  '@context': 'http://schema.org'
+                }
+                const sessionData = this.store.getSessionData()
+                sessionData.userData = userData
+                this.store.setSessionData(sessionData)
+                return userData
+              } else {
+                return response.text()
+                  .then(responseText => JSON.parse(responseText))
+                  .then(wrappedProfile => extractProfile(wrappedProfile[0].token))
+                  .then((profile) => {
+                    const sessionData = this.store.getSessionData()
+                    userData.profile = profile
+                    sessionData.userData = userData
+                    this.store.setSessionData(sessionData)
+                    return userData
+                  })
+              }
+            })
+        } else {
+          const sessionData = this.store.getSessionData()
+          userData.profile = tokenPayload.profile
+          sessionData.userData = userData
+          this.store.setSessionData(sessionData)
+          return userData
+        }
+      })
   }
 
   /**
@@ -215,7 +395,11 @@ export class UserSession {
    * @return {Object} User data object.
    */
   loadUserData() {
-    return loadUserDataImpl(this)
+    const userData = this.store.getSessionData().userData
+    if (!userData) {
+      throw new InvalidStateError('No user data found. Did the user sign in?')
+    }
+    return userData
   }
 
 
@@ -250,7 +434,16 @@ export class UserSession {
    */
   encryptContent(content: string | Buffer,
                  options?: {publicKey?: string}) {
-    return encryptContentImpl(this, content, options)
+    const defaults: { publicKey: string | null } = { publicKey: null }
+    const opt = Object.assign({}, defaults, options)
+    if (!opt.publicKey) {
+      const userData = this.loadUserData()
+      const privateKey = userData.appPrivateKey
+      opt.publicKey = getPublicKeyFromPrivate(privateKey)
+    }
+
+    const cipherObject = encryptECIES(opt.publicKey, content)
+    return JSON.stringify(cipherObject)
   }
 
   /**
@@ -262,8 +455,25 @@ export class UserSession {
    * key to use for decryption. If not provided, will use user's appPrivateKey.
    * @return {String|Buffer} decrypted content.
    */
-  decryptContent(content: string, options?: {privateKey?: string}) {
-    return decryptContentImpl(this, content, options)
+  decryptContent(content: string, options?: { privateKey?: string }) {
+    const defaults: {privateKey?: string | null } = { privateKey: null }
+    const opt = Object.assign({}, defaults, options)
+    let privateKey = opt.privateKey
+    if (!privateKey) {
+      privateKey = this.loadUserData().appPrivateKey
+    }
+  
+    try {
+      const cipherObject = JSON.parse(content)
+      return decryptECIES(privateKey, cipherObject)
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        throw new Error('Failed to parse encrypted content JSON. The content may not '
+                        + 'be encrypted. If using getFile, try passing { decrypt: false }.')
+      } else {
+        throw err
+      }
+    }
   }
 
   /**
@@ -279,7 +489,92 @@ export class UserSession {
    * if it failed
    */
   putFile(path: string, content: string | Buffer, options?: PutFileOptions) {
-    return putFileImpl(this, path, content, options)
+    const defaults = {
+      encrypt: true,
+      sign: false,
+      contentType: ''
+    }
+  
+    const opt = Object.assign({}, defaults, options)
+  
+    let { contentType } = opt
+    if (!contentType) {
+      contentType = (typeof (content) === 'string') ? 'text/plain; charset=utf-8' : 'application/octet-stream'
+    }
+  
+    // First, let's figure out if we need to get public/private keys,
+    //  or if they were passed in
+  
+    let privateKey = ''
+    let publicKey = ''
+    if (opt.sign) {
+      if (typeof (opt.sign) === 'string') {
+        privateKey = opt.sign
+      } else {
+        privateKey = this.loadUserData().appPrivateKey
+      }
+    }
+    if (opt.encrypt) {
+      if (typeof (opt.encrypt) === 'string') {
+        publicKey = opt.encrypt
+      } else {
+        if (!privateKey) {
+          privateKey = this.loadUserData().appPrivateKey
+        }
+        publicKey = getPublicKeyFromPrivate(privateKey)
+      }
+    }
+  
+    // In the case of signing, but *not* encrypting,
+    //   we perform two uploads. So the control-flow
+    //   here will return there.
+    if (!opt.encrypt && opt.sign) {
+      const signatureObject = signECDSA(privateKey, content)
+      const signatureContent = JSON.stringify(signatureObject)
+      return getOrSetLocalGaiaHubConnection(this)
+        .then(gaiaHubConfig => new Promise<string[]>((resolve, reject) => Promise.all([
+          uploadToGaiaHub(path, content, gaiaHubConfig, contentType),
+          uploadToGaiaHub(`${path}${SIGNATURE_FILE_SUFFIX}`,
+                          signatureContent, gaiaHubConfig, 'application/json')
+        ])
+          .then(files => resolve(files))
+          .catch(() => {
+            setLocalGaiaHubConnection(this)
+              .then(freshHubConfig => Promise.all([
+                uploadToGaiaHub(path, content, freshHubConfig, contentType),
+                uploadToGaiaHub(`${path}${SIGNATURE_FILE_SUFFIX}`,
+                                signatureContent, freshHubConfig, 'application/json')
+              ])
+                .then(files => resolve(files)).catch(reject))
+          })))
+        .then(fileUrls => fileUrls[0])
+    }
+  
+    // In all other cases, we only need one upload.
+    if (opt.encrypt && !opt.sign) {
+      content = this.encryptContent(content, { publicKey })
+      contentType = 'application/json'
+    } else if (opt.encrypt && opt.sign) {
+      const cipherText = this.encryptContent(content, { publicKey })
+      const signatureObject = signECDSA(privateKey, cipherText)
+      const signedCipherObject = {
+        signature: signatureObject.signature,
+        publicKey: signatureObject.publicKey,
+        cipherText
+      }
+      content = JSON.stringify(signedCipherObject)
+      contentType = 'application/json'
+    }
+    return getOrSetLocalGaiaHubConnection(this)
+      .then(gaiaHubConfig => new Promise<string>((resolve, reject) => {
+        uploadToGaiaHub(path, content, gaiaHubConfig, contentType)
+          .then(resolve)
+          .catch(() => {
+            setLocalGaiaHubConnection(this)
+              .then(freshHubConfig => uploadToGaiaHub(path, content, freshHubConfig, contentType)
+                .then(file => resolve(file)).catch(reject))
+          })
+      }))
   }
 
   /**
@@ -299,7 +594,120 @@ export class UserSession {
    * or rejects with an error
    */
   getFile(path: string, options?: GetFileOptions) {
-    return getFileImpl(this, path, options)
+    const appConfig = this.appConfig
+    if (!appConfig) {
+      throw new InvalidStateError('Missing AppConfig')
+    }
+    const defaults: GetFileOptions = {
+      decrypt: true,
+      verify: false,
+      username: null,
+      app: appConfig.appDomain,
+      zoneFileLookupURL: null
+    }
+  
+    const opt = Object.assign({}, defaults, options)
+  
+    // in the case of signature verification, but no
+    //  encryption expected, need to fetch _two_ files.
+    if (opt.verify && !opt.decrypt) {
+      return getFileSignedUnencrypted(this, path, opt)
+    }
+  
+    return getFileContents(this, path, opt.app, opt.username, opt.zoneFileLookupURL, !!opt.decrypt)
+      .then<string|ArrayBuffer|Buffer>((storedContents) => {
+        if (storedContents === null) {
+          return storedContents
+        } else if (opt.decrypt && !opt.verify) {
+          if (typeof storedContents !== 'string') {
+            throw new Error('Expected to get back a string for the cipherText')
+          }
+          return this.decryptContent(storedContents)
+        } else if (opt.decrypt && opt.verify) {
+          if (typeof storedContents !== 'string') {
+            throw new Error('Expected to get back a string for the cipherText')
+          }
+          return handleSignedEncryptedContents(this, path, storedContents,
+                                               opt.app, opt.username, opt.zoneFileLookupURL)
+        } else if (!opt.verify && !opt.decrypt) {
+          return storedContents
+        } else {
+          throw new Error('Should be unreachable.')
+        }
+      })
+  }
+
+  /**
+   * Loop over the list of files in a Gaia hub, and run a callback on each entry.
+   * Not meant to be called by external clients.
+   * @param {GaiaHubConfig} hubConfig - the Gaia hub config
+   * @param {String | null} page - the page ID
+   * @param {number} callCount - the loop count
+   * @param {number} fileCount - the number of files listed so far
+   * @param {function} callback - the callback to invoke on each file.  If it returns a falsey
+   *  value, then the loop stops.  If it returns a truthy value, the loop continues.
+   * @returns {Promise} that resolves to the number of files listed.
+   * @private
+   */
+  listFilesLoop(
+    hubConfig: GaiaHubConfig,
+    page: string | null,
+    callCount: number,
+    fileCount: number,
+    callback: (name: string) => boolean): Promise<number> {
+    if (callCount > 65536) {
+      // this is ridiculously huge, and probably indicates
+      // a faulty Gaia hub anyway (e.g. on that serves endless data)
+      throw new Error('Too many entries to list')
+    }
+
+    let httpStatus
+    const pageRequest = JSON.stringify({ page })
+
+    const fetchOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': `${pageRequest.length}`,
+        Authorization: `bearer ${hubConfig.token}`
+      },
+      body: pageRequest
+    }
+
+    return fetch(`${hubConfig.server}/list-files/${hubConfig.address}`, fetchOptions)
+      .then((response) => {
+        httpStatus = response.status
+        if (httpStatus >= 400) {
+          throw new Error(`listFiles failed with HTTP status ${httpStatus}`)
+        }
+        return response.text()
+      })
+      .then(responseText => JSON.parse(responseText))
+      .then((responseJSON) => {
+        const entries = responseJSON.entries
+        const nextPage = responseJSON.page
+        if (entries === null || entries === undefined) {
+          // indicates a misbehaving Gaia hub or a misbehaving driver
+          // (i.e. the data is malformed)
+          throw new Error('Bad listFiles response: no entries')
+        }
+        for (let i = 0; i < entries.length; i++) {
+          const rc = callback(entries[i])
+          if (!rc) {
+            // callback indicates that we're done
+            return Promise.resolve(fileCount + i)
+          }
+        }
+        if (nextPage && entries.length > 0) {
+          // keep going -- have more entries
+          return this.listFilesLoop(
+            hubConfig, nextPage, callCount + 1, fileCount + entries.length, callback
+          )
+        } else {
+          // no more entries -- end of data
+          return Promise.resolve(fileCount + entries.length)
+        }
+      })
   }
 
   /**
@@ -319,7 +727,34 @@ export class UserSession {
     app?: string,
     zoneFileLookupURL?: string
   }): Promise<string> {
-    return getFileUrlImpl(this, path, options)
+    return Promise.resolve()
+      .then(() => {
+        const appConfig = this.appConfig
+        if (!appConfig) {
+          throw new InvalidStateError('Missing AppConfig')
+        }
+        const defaults = {
+          username: null,
+          app: appConfig.appDomain,
+          zoneFileLookupURL: null
+        }
+        return Object.assign({}, defaults, options)
+      })
+      .then((opts) => {
+        if (opts.username) {
+          return getUserAppFileUrl(path, opts.username, opts.app, opts.zoneFileLookupURL)
+        } else {
+          return getOrSetLocalGaiaHubConnection(this)
+            .then(gaiaHubConfig => getFullReadUrl(path, gaiaHubConfig))
+        }
+      })
+      .then(readUrl => {
+        if (!readUrl) {
+          throw new Error('Missing readURL')
+        } else {
+          return readUrl
+        }
+      })
   }
 
   /**
@@ -329,7 +764,8 @@ export class UserSession {
    * @return {Promise} that resolves to the number of files listed
    */
   listFiles(callback: (name: string) => boolean): Promise<number> {
-    return listFilesImpl(this, callback)
+    return getOrSetLocalGaiaHubConnection(this)
+      .then(gaiaHubConfig => this.listFilesLoop(gaiaHubConfig, null, 0, 0, callback))
   }
 
   /**

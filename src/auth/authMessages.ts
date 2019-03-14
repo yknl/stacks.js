@@ -9,12 +9,10 @@ import {
   nextMonth, publicKeyToAddress,
   makeECPrivateKey
 } from '../index'
-
 import { encryptECIES, decryptECIES } from '../encryption/ec'
-
 import { Logger } from '../logger'
 
-const VERSION = '1.3.1'
+export const VERSION = '1.3.1'
 
 type AuthMetadata = {
   email?: string,
@@ -31,66 +29,6 @@ type AuthMetadata = {
 export function generateTransitKey() {
   const transitKey = makeECPrivateKey()
   return transitKey
-}
-
-/**
- * Generates an authentication request that can be sent to the Blockstack
- * browser for the user to approve sign in. This authentication request can
- * then be used for sign in by passing it to the `redirectToSignInWithAuthRequest`
- * method.
- *
- * *Note: This method should only be used if you want to roll your own authentication
- * flow. Typically you'd use `redirectToSignIn` which takes care of this
- * under the hood.*
- *
- * @param  {String} transitPrivateKey - hex encoded transit private key
- * @param {String} redirectURI - location to redirect user to after sign in approval
- * @param {String} manifestURI - location of this app's manifest file
- * @param {Array<String>} scopes - the permissions this app is requesting
- * @param {String} appDomain - the origin of this app
- * @param {Number} expiresAt - the time at which this request is no longer valid
- * @param {Object} extraParams - Any extra parameters you'd like to pass to the authenticator.
- * Use this to pass options that aren't part of the Blockstack auth spec, but might be supported
- * by special authenticators.
- * @return {String} the authentication request
- * @private
- */
-export function makeAuthRequestImpl(transitPrivateKey: string,
-                                    redirectURI: string,
-                                    manifestURI: string,
-                                    scopes: Array<string>,
-                                    appDomain: string = window.location.origin,
-                                    expiresAt: number,
-                                    extraParams: any = {}): string {
-  /* Create the payload */
-  const payload = Object.assign({}, extraParams, {
-    jti: makeUUID4(),
-    iat: Math.floor(new Date().getTime() / 1000), // JWT times are in seconds
-    exp: Math.floor(expiresAt / 1000), // JWT times are in seconds
-    iss: null,
-    public_keys: [],
-    domain_name: appDomain,
-    manifest_uri: manifestURI,
-    redirect_uri: redirectURI,
-    version: VERSION,
-    do_not_include_profile: true,
-    supports_hub_url: true,
-    scopes
-  })
-
-  Logger.info(`blockstack.js: generating v${VERSION} auth request`)
-
-  /* Convert the private key to a public key to an issuer */
-  const publicKey = SECP256K1Client.derivePublicKey(transitPrivateKey)
-  payload.public_keys = [publicKey]
-  const address = publicKeyToAddress(publicKey)
-  payload.iss = makeDIDFromAddress(address)
-
-  /* Sign and return the token */
-  const tokenSigner = new TokenSigner('ES256k', transitPrivateKey)
-  const token = tokenSigner.sign(payload)
-
-  return token
 }
 
 /**

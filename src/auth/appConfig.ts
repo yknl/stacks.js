@@ -1,7 +1,6 @@
 
 import { DEFAULT_CORE_NODE, DEFAULT_SCOPE, DEFAULT_BLOCKSTACK_HOST } from './authConstants'
 
-
 /**
  * Configuration data for the current app.
  *
@@ -67,7 +66,7 @@ export class AppConfig {
    * @param {string} authenticatorURL - the web-based fall back authenticator
    */
   constructor(scopes: Array<string> = DEFAULT_SCOPE.slice(),
-              appDomain: string = window.location.origin,
+              appDomain: string = typeof window !== 'undefined' ? window.location.origin : '',
               redirectPath: string = '',
               manifestPath: string = '/manifest.json',
               coreNode: string | null = null,
