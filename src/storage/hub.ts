@@ -10,11 +10,11 @@ import { Logger } from '../logger'
 
 export const BLOCKSTACK_GAIA_HUB_LABEL = 'blockstack-gaia-hub-config'
 
-export type GaiaHubConfig = {
-  address: string,
-  url_prefix: string,
-  token: string,
-  server: string
+export interface GaiaHubConfig {
+  address: string;
+  url_prefix: string;
+  token: string;
+  server: string;
 }
 
 export async function uploadToGaiaHub(

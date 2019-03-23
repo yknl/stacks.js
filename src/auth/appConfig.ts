@@ -23,7 +23,7 @@ export class AppConfig {
    * An array of string representing permissions requested by the app.
    * @type {[Array<string>}
    */
-  scopes: Array<string>
+  scopes: string[]
 
 
   /**
@@ -66,7 +66,7 @@ export class AppConfig {
    * @param {string} coreNode - override the default or user selected core node
    * @param {string} authenticatorURL - the web-based fall back authenticator
    */
-  constructor(scopes: Array<string> = DEFAULT_SCOPE.slice(),
+  constructor(scopes: string[] = DEFAULT_SCOPE.slice(),
               appDomain: string = window.location.origin,
               redirectPath: string = '',
               manifestPath: string = '/manifest.json',

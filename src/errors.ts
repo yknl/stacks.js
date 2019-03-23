@@ -9,10 +9,10 @@ export const ERROR_CODES = {
 
 Object.freeze(ERROR_CODES)
 
-type ErrorType = {
-  code: string,
-  parameter?: string,
-  message: string
+interface ErrorType {
+  code: string;
+  parameter?: string;
+  message: string;
 }
 
 export class BlockstackError extends Error {

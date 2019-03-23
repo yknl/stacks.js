@@ -20,10 +20,10 @@ import { Logger } from '../logger'
 
 import { UserSession } from '../auth/userSession'
 
-export type PutFileOptions = {
-  encrypt?: boolean | string,
-  sign?: boolean,
-  contentType?: string
+export interface PutFileOptions {
+  encrypt?: boolean | string;
+  sign?: boolean;
+  contentType?: string;
 }
 
 const SIGNATURE_FILE_SUFFIX = '.sig'
@@ -76,7 +76,7 @@ export async function getUserAppFileUrl(
 export function encryptContent(
   content: string | Buffer,
   options?: {
-    publicKey?: string
+    publicKey?: string;
   },
   caller?: UserSession
 ) {
@@ -101,7 +101,7 @@ export function encryptContent(
 export function decryptContent(
   content: string,
   options?: {
-    privateKey?: string
+    privateKey?: string;
   },
   caller?: UserSession
 ) {
@@ -156,8 +156,8 @@ async function getGaiaAddress(
  */
 function normalizeOptions<T>(
   options?: {
-    app?: string, 
-    username?: string
+    app?: string; 
+    username?: string;
   } & T,
   caller?: UserSession
 ) {
@@ -189,9 +189,9 @@ function normalizeOptions<T>(
 export async function getFileUrl(
   path: string, 
   options?: {
-    app?: string, 
-    username?: string, 
-    zoneFileLookupURL?: string
+    app?: string; 
+    username?: string; 
+    zoneFileLookupURL?: string;
   },
   caller?: UserSession
 ): Promise<string> {
@@ -367,12 +367,12 @@ function handleSignedEncryptedContents(caller: UserSession, path: string, stored
   })
 }
 
-export type GetFileOptions = {
-  decrypt?: boolean,
-  verify?: boolean,
-  username?: string | null,
-  app?: string | null,
-  zoneFileLookupURL?: string | null
+export interface GetFileOptions {
+  decrypt?: boolean;
+  verify?: boolean;
+  username?: string | null;
+  app?: string | null;
+  zoneFileLookupURL?: string | null;
 }
 
 /**
@@ -405,9 +405,9 @@ export function getFile(
   const defaults = {
     decrypt: true,
     verify: false,
-    username: null,
+    username: null as string,
     app: typeof window !== 'undefined' ? window.location.origin : undefined,
-    zoneFileLookupURL: null
+    zoneFileLookupURL: null as string
   }
   const opt = Object.assign({}, defaults, options)
 

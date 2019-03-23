@@ -15,7 +15,7 @@ interface ValidateProofService {
 }
 
 export const profileServices: {
-  [serviceName: string]: Service & ValidateProofService
+  [serviceName: string]: Service & ValidateProofService;
 } = {
   facebook: Facebook,
   github: Github,

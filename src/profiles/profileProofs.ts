@@ -17,7 +17,7 @@ export function validateProofs(profile: any,
     throw new Error('Profile must not be null')
   }
 
-  let accounts: Array<any> = []
+  let accounts: any[] = []
   const proofsToValidate: Promise<any>[] = []
 
   if (profile.hasOwnProperty('account')) {

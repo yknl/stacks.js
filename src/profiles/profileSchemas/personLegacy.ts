@@ -14,19 +14,19 @@ function formatAccount(serviceName: string, data: any) {
 
 export function getPersonFromLegacyFormat(profile: any) {
   const profileData: {
-    ['@type']: string, 
-    account?: any[],
-    name?: string,
-    description?: string,
+    ['@type']: string; 
+    account?: any[];
+    name?: string;
+    description?: string;
     address?: {
-      ['@type']: string,
-      addressLocality: string
-    },
-    image?: any[],
-    website?: Array<{
-      ['@type']: string,
-      url: string
-    }>
+      ['@type']: string;
+      addressLocality: string;
+    };
+    image?: any[];
+    website?: {
+      ['@type']: string;
+      url: string;
+    }[];
   } = {
     '@type': 'Person'
   }

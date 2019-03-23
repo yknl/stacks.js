@@ -25,7 +25,7 @@ import queryString from 'query-string'
     // Redirect back to the localhost auth url, as opposed to another protocol launch.
     // This will re-use the same tab rather than creating another useless one.
     window.setTimeout(() => {
-      window.location.href = decodeURIComponent(<string>queryDict.authContinuation)
+      window.location.href = decodeURIComponent(queryDict.authContinuation as string)
     }, 10)
   }
 }())

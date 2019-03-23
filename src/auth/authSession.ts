@@ -17,7 +17,7 @@ import 'cross-fetch/polyfill'
  * @private
  */
 export function makeCoreSessionRequest(appDomain: string,
-                                       appMethods: Array<string>,
+                                       appMethods: string[],
                                        appPrivateKey: string,
                                        blockchainID: string = null,
                                        thisDevice: string = null) {

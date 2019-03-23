@@ -25,6 +25,7 @@ class HackerNews extends Service {
     throw new Error(`Proof url ${proof.proof_url} is not valid for service ${proof.service}`)
   }
 
+  /* eslint-disable-next-line */
   static normalizeUrl(proof: any) {
     return ''
   }

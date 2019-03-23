@@ -20,7 +20,7 @@ import {
 } from '../errors'
 import { Logger } from '../logger'
 import { GaiaHubConfig, connectToGaiaHub } from '../storage/hub'
-import { BLOCKSTACK_DEFAULT_GAIA_HUB_URL, DEFAULT_BLOCKSTACK_HOST, DEFAULT_SCOPE } from './authConstants'
+import { BLOCKSTACK_DEFAULT_GAIA_HUB_URL } from './authConstants'
 
 /**
  * Represents an instance of a signed in user for a particular app.
@@ -38,9 +38,9 @@ export class UserSession {
   store: SessionDataStore
 
   constructor(options?: {
-    appConfig?: AppConfig,
-    sessionStore?: SessionDataStore,
-    sessionOptions?: SessionOptions }) {
+    appConfig?: AppConfig;
+    sessionStore?: SessionDataStore;
+    sessionOptions?: SessionOptions; }) {
     let runningInBrowser = true
 
     if (typeof window === 'undefined') {
@@ -325,9 +325,9 @@ export class UserSession {
    * @returns {Promise<string>} that resolves to the URL or rejects with an error
    */
   getFileUrl(path: string, options?: {
-    username?: string,
-    app?: string,
-    zoneFileLookupURL?: string
+    username?: string;
+    app?: string;
+    zoneFileLookupURL?: string;
   }): Promise<string> {
     return storage.getFileUrl(path, options, this)
   }

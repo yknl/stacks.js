@@ -15,7 +15,7 @@ export function getAuthRequestFromURL() {
   checkWindowAPI('getAuthRequestFromURL', 'location')
   const queryDict = queryString.parse(window.location.search)
   if (queryDict.authRequest) {
-    return (<string>queryDict.authRequest).split(`${BLOCKSTACK_HANDLER}:`).join('')
+    return (queryDict.authRequest as string).split(`${BLOCKSTACK_HANDLER}:`).join('')
   } else {
     return null
   }

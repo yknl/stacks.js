@@ -14,9 +14,9 @@ import { UserSession } from './userSession'
 
 const VERSION = '1.3.1'
 
-type AuthMetadata = {
-  email?: string,
-  profileUrl?: string
+interface AuthMetadata {
+  email?: string;
+  profileUrl?: string;
 }
 
 /**

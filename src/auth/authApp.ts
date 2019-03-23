@@ -99,7 +99,7 @@ export function isSignInPending() {
 export function getAuthResponseToken(): string {
   checkWindowAPI('getAuthResponseToken', 'location')
   const queryDict = queryString.parse(window.location.search)
-  return queryDict.authResponse ? <string>queryDict.authResponse : ''
+  return queryDict.authResponse ? queryDict.authResponse as string : ''
 }
 
 /**
@@ -311,7 +311,7 @@ function detectProtocolLaunch(
  */
 interface CSSStyleDeclarationFix extends CSSStyleDeclaration {
   /** @see https://developer.mozilla.org/en-US/docs/Web/CSS/all */
-  all: string | null
+  all: string | null;
 }
 
 /**

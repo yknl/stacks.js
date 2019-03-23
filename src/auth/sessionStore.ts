@@ -23,7 +23,7 @@ export class SessionDataStore {
     throw new Error('Abstract class')
   }
 
-  /* eslint-disable */
+  /* eslint-disable-next-line */
   setSessionData(session: SessionData): boolean {
     throw new Error('Abstract class')
   }
@@ -31,7 +31,6 @@ export class SessionDataStore {
   deleteSessionData(): boolean {
     throw new Error('Abstract class')
   }
-  /* eslint-enable */
 }
 
 /**

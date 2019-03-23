@@ -6,12 +6,12 @@ import { getPublicKeyFromPrivate } from '../keys'
 
 const ecurve = new EllipticCurve('secp256k1')
 
-export type CipherObject = {
-  iv: string,
-  ephemeralPK: string,
-  cipherText: string,
-  mac: string,
-  wasString: boolean
+export interface CipherObject {
+  iv: string;
+  ephemeralPK: string;
+  cipherText: string;
+  mac: string;
+  wasString: boolean;
 }
 
 function aes256CbcEncrypt(iv: Buffer, key: Buffer, plaintext: Buffer) {
@@ -161,7 +161,7 @@ export function decryptECIES(privateKey: string, cipherObject: CipherObject): Bu
  * @private
  */
 export function signECDSA(privateKey: string, content: string | Buffer): { 
-  publicKey: string, signature: string 
+  publicKey: string; signature: string;
 } {
   const contentBuffer = content instanceof Buffer ? content : Buffer.from(content)
   const ecPrivate = ecurve.keyFromPrivate(privateKey, 'hex')
@@ -197,5 +197,5 @@ export function verifyECDSA(content: string | ArrayBuffer | Buffer,
   const ecPublic = ecurve.keyFromPublic(publicKey, 'hex')
   const contentHash = crypto.createHash('sha256').update(contentBuffer).digest()
 
-  return ecPublic.verify(contentHash, <any>signature)
+  return ecPublic.verify(contentHash, signature as any)
 }

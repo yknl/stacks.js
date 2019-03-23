@@ -6,7 +6,8 @@ class Github extends Service {
     const baseUrls = ['https://gist.github.com/', 'http://gist.github.com', 'gist.github.com']
     return baseUrls
   }
-
+  
+  /* eslint-disable-next-line */
   static normalizeUrl(proof: any) {
     return ''
   }

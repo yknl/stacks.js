@@ -6,11 +6,11 @@ import RIPEMD160 from 'ripemd160'
 import { MissingParameterError, RemoteServiceError } from './errors'
 import { Logger } from './logger'
 
-export type UTXO = {
-  value?: number,
-  confirmations?: number,
-  tx_hash: string,
-  tx_output_n: number
+export interface UTXO {
+  value?: number;
+  confirmations?: number;
+  tx_hash: string;
+  tx_output_n: number;
 }
 
 const SATOSHIS_PER_BTC = 1e8
@@ -31,7 +31,7 @@ export class BitcoinNetwork {
     return Promise.reject(new Error(`Not implemented, getTransactionInfo(${txid})`))
   }
 
-  getNetworkedUTXOs(address: string): Promise<Array<UTXO>> {
+  getNetworkedUTXOs(address: string): Promise<UTXO[]> {
     return Promise.reject(new Error(`Not implemented, getNetworkedUTXOs(${address})`))
   }
 }
@@ -47,7 +47,7 @@ export class BlockstackNetwork {
 
   includeUtxoMap: {[address: string]: UTXO[]}
 
-  excludeUtxoSet: Array<UTXO>
+  excludeUtxoSet: UTXO[]
 
   btc: BitcoinNetwork
 
@@ -94,7 +94,7 @@ export class BlockstackNetwork {
    * @return {Promise} a promise to an Object with { units: String, amount: BigInteger }
    * @private
    */
-  getNamePriceV1(fullyQualifiedName: string): Promise<{units: string, amount: BN}> {
+  getNamePriceV1(fullyQualifiedName: string): Promise<{units: string; amount: BN}> {
     // legacy code path
     return fetch(`${this.blockstackAPIUrl}/v1/prices/names/${fullyQualifiedName}`)
       .then((resp) => {
@@ -128,7 +128,7 @@ export class BlockstackNetwork {
    * @return {Promise} a promise to an Object with { units: String, amount: BigInteger }
    * @private
    */
-  getNamespacePriceV1(namespaceID: string): Promise<{units: string, amount: BN}> {
+  getNamespacePriceV1(namespaceID: string): Promise<{units: string; amount: BN}> {
     // legacy code path
     return fetch(`${this.blockstackAPIUrl}/v1/prices/namespaces/${namespaceID}`)
       .then((resp) => {
@@ -159,7 +159,7 @@ export class BlockstackNetwork {
    * @return {Promise} a promise to an Object with { units: String, amount: BigInteger }
    * @private
    */
-  getNamePriceV2(fullyQualifiedName: string): Promise<{units: string, amount: BN}> {
+  getNamePriceV2(fullyQualifiedName: string): Promise<{units: string; amount: BN}> {
     return fetch(`${this.blockstackAPIUrl}/v2/prices/names/${fullyQualifiedName}`)
       .then((resp) => {
         if (resp.status !== 200) {
@@ -197,7 +197,7 @@ export class BlockstackNetwork {
    * @return {Promise} a promise to an Object with { units: String, amount: BigInteger }
    * @private
    */
-  getNamespacePriceV2(namespaceID: string): Promise<{units: string, amount: BN}> {
+  getNamespacePriceV2(namespaceID: string): Promise<{units: string; amount: BN}> {
     return fetch(`${this.blockstackAPIUrl}/v2/prices/namespaces/${namespaceID}`)
       .then((resp) => {
         if (resp.status !== 200) {
@@ -235,7 +235,7 @@ export class BlockstackNetwork {
    *   (e.g. if .units is BTC, .amount will be satoshis; if .units is STACKS, 
    *   .amount will be microStacks)
    */
-  getNamePrice(fullyQualifiedName: string): Promise<{units: string, amount: BN}> {
+  getNamePrice(fullyQualifiedName: string): Promise<{units: string; amount: BN}> {
     // handle v1 or v2 
     return Promise.resolve().then(() => this.getNamePriceV2(fullyQualifiedName))
       .catch(() => this.getNamePriceV1(fullyQualifiedName))
@@ -250,7 +250,7 @@ export class BlockstackNetwork {
    *   (e.g. if .units is BTC, .amount will be satoshis; if .units is STACKS, 
    *   .amount will be microStacks)
    */
-  getNamespacePrice(namespaceID: string): Promise<{units: string, amount: BN}> {
+  getNamespacePrice(namespaceID: string): Promise<{units: string; amount: BN}> {
     // handle v1 or v2 
     return Promise.resolve().then(() => this.getNamespacePriceV2(namespaceID))
       .catch(() => this.getNamespacePriceV1(namespaceID))
@@ -262,6 +262,7 @@ export class BlockstackNetwork {
    * @param {string} fullyQualifiedName unused
    * @return {Promise} a promise to the number of blocks
    */
+  /* eslint-disable-next-line */
   getGracePeriod(fullyQualifiedName?: string) {
     return Promise.resolve(5000)
   }
@@ -794,7 +795,7 @@ export class BlockstackNetwork {
     throw new Error('Not implemented.')
   }
 
-  getUTXOs(address: string): Promise<Array<UTXO>> {
+  getUTXOs(address: string): Promise<UTXO[]> {
     return this.getNetworkedUTXOs(address)
       .then((networkedUTXOs) => {
         let returnSet = networkedUTXOs.concat()
@@ -830,7 +831,7 @@ export class BlockstackNetwork {
   modifyUTXOSetFrom(txHex: string) {
     const tx = bitcoinjs.Transaction.fromHex(txHex)
 
-    const excludeSet: Array<UTXO> = this.excludeUtxoSet.concat()
+    const excludeSet: UTXO[] = this.excludeUtxoSet.concat()
 
     tx.ins.forEach((utxoUsed) => {
       const reverseHash = Buffer.from(utxoUsed.hash)
@@ -894,7 +895,7 @@ export class BlockstackNetwork {
     return this.btc.getBlockHeight()
   }
 
-  getNetworkedUTXOs(address: string): Promise<Array<UTXO>> {
+  getNetworkedUTXOs(address: string): Promise<UTXO[]> {
     return this.btc.getNetworkedUTXOs(address)
   }
 }
@@ -913,11 +914,11 @@ export class LocalRegtest extends BlockstackNetwork {
 export class BitcoindAPI extends BitcoinNetwork {
   bitcoindUrl: string
 
-  bitcoindCredentials: {username: string, password: string}
+  bitcoindCredentials: {username: string; password: string}
 
   importedBefore: any
 
-  constructor(bitcoindUrl: string, bitcoindCredentials: {username: string, password: string}) {
+  constructor(bitcoindUrl: string, bitcoindCredentials: {username: string; password: string}) {
     super()
     this.bitcoindUrl = bitcoindUrl
     this.bitcoindCredentials = bitcoindCredentials
@@ -1000,7 +1001,7 @@ export class BitcoindAPI extends BitcoinNetwork {
       })
   }
 
-  getNetworkedUTXOs(address: string): Promise<Array<UTXO>> {
+  getNetworkedUTXOs(address: string): Promise<UTXO[]> {
     const jsonRPCImport = {
       jsonrpc: '1.0',
       method: 'importaddress',
@@ -1081,7 +1082,7 @@ export class InsightClient extends BitcoinNetwork {
       .then(blockInfo => ({ block_height: blockInfo.height }))
   }
 
-  getNetworkedUTXOs(address: string): Promise<Array<UTXO>> {
+  getNetworkedUTXOs(address: string): Promise<UTXO[]> {
     return fetch(`${this.apiUrl}/addr/${address}/utxo`)
       .then(resp => resp.json())
       .then(utxos => utxos.map(
@@ -1109,7 +1110,7 @@ export class BlockchainInfoApi extends BitcoinNetwork {
       .then(blockObj => blockObj.height)
   }
 
-  getNetworkedUTXOs(address: string): Promise<Array<UTXO>> {
+  getNetworkedUTXOs(address: string): Promise<UTXO[]> {
     return fetch(`${this.utxoProviderUrl}/unspent?format=json&active=${address}&cors=true`)
       .then((resp) => {
         if (resp.status === 500) {
@@ -1153,7 +1154,7 @@ export class BlockchainInfoApi extends BitcoinNetwork {
     return fetch(`${this.utxoProviderUrl}/pushtx?cors=true`,
                  {
                    method: 'POST',
-                   body: <any>form
+                   body: form as any
                  })
       .then((resp) => {
         const text = resp.text()

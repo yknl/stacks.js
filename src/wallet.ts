@@ -17,12 +17,12 @@ const BITCOIN_ACCOUNT_INDEX = 0
 const EXTERNAL_ADDRESS = 'EXTERNAL_ADDRESS'
 const CHANGE_ADDRESS = 'CHANGE_ADDRESS'
 
-export type IdentityKeyPair = {
-  key: string,
-  keyID: string,
-  address: string,
-  appsNodeKey: string,
-  salt: string
+export interface IdentityKeyPair {
+  key: string;
+  keyID: string;
+  address: string;
+  appsNodeKey: string;
+  salt: string;
 }
 
 function hashCode(string: string) {

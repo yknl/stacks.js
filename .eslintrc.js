@@ -65,17 +65,13 @@ module.exports = {
       "ImportDeclaration": "first",
       "CallExpression": { "arguments": "first" }
     }],
+
     "@typescript-eslint/explicit-member-accessibility": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/class-name-casing": "off",
     "@typescript-eslint/camelcase": "off",
-    "@typescript-eslint/array-type": "off",
-    "@typescript-eslint/member-delimiter-style": "off",
-    "@typescript-eslint/no-angle-bracket-type-assertion": "off",
-    "@typescript-eslint/prefer-interface": "off",
-    "@typescript-eslint/no-use-before-define": "off",
-    "@typescript-eslint/no-unused-vars": "off",
-
+    "@typescript-eslint/no-use-before-define": "off"
+    ,
     // TODO: enable this when reasonable
     "@typescript-eslint/no-explicit-any": "off",
 

@@ -28,8 +28,8 @@ const TX_INPUT_PUBKEYHASH = 107
 const TX_OUTPUT_BASE = 8 + 1
 const TX_OUTPUT_PUBKEYHASH = 25
 
-type txPoint = {
-  script: { length: number }
+interface txPoint {
+  script: { length: number };
 }
 
 function inputBytes(input: txPoint | null) {
@@ -48,14 +48,14 @@ function outputBytes(output: txPoint | null) {
   }
 }
 
-function transactionBytes(inputs: Array<txPoint | null>, outputs: Array<txPoint | null>) {
+function transactionBytes(inputs: txPoint[], outputs: txPoint[]) {
   return TX_EMPTY_SIZE
     + inputs.reduce((a: number, x: txPoint | null) => (a + inputBytes(x)), 0)
     + outputs.reduce((a: number, x: txPoint | null) => (a + outputBytes(x)), 0)
 }
 
 export function getTransactionInsideBuilder(txBuilder: bitcoinjs.TransactionBuilder) {
-  return <bitcoinjs.Transaction>(<any>txBuilder).__tx
+  return (txBuilder as any).__tx as bitcoinjs.Transaction
 }
 
 function getTransaction(txIn: bitcoinjs.Transaction | bitcoinjs.TransactionBuilder) {
@@ -71,13 +71,13 @@ export function estimateTXBytes(txIn: bitcoinjs.Transaction | bitcoinjs.Transact
                                 additionalInputs: number,
                                 additionalOutputs: number) {
   const innerTx = getTransaction(txIn)
-  const dummyInputs: Array<null> = new Array(additionalInputs)
+  const dummyInputs = new Array(additionalInputs)
   dummyInputs.fill(null)
-  const dummyOutputs: Array<null> = new Array(additionalOutputs)
+  const dummyOutputs = new Array(additionalOutputs)
   dummyOutputs.fill(null)
 
-  const inputs: Array<null | txPoint> = [].concat(innerTx.ins, dummyInputs)
-  const outputs: Array<null | txPoint> = [].concat(innerTx.outs, dummyOutputs)
+  const inputs: txPoint[] = [].concat(innerTx.ins, dummyInputs)
+  const outputs: txPoint[] = [].concat(innerTx.outs, dummyOutputs)
 
   return transactionBytes(inputs, outputs)
 }
@@ -131,7 +131,7 @@ export function decodeB40(input: string) {
  * @private
  */
 export function addUTXOsToFund(txBuilderIn: bitcoinjs.TransactionBuilder,
-                               utxos: Array<UTXO>,
+                               utxos: UTXO[],
                                amountToFund: number, feeRate: number,
                                fundNewFees: boolean = true): number {
   if (utxos.length === 0) {
@@ -180,7 +180,7 @@ export function addUTXOsToFund(txBuilderIn: bitcoinjs.TransactionBuilder,
 
 export function signInputs(txB: bitcoinjs.TransactionBuilder,
                            defaultSigner: TransactionSigner,
-                           otherSigners?: Array<{index: number, signer: TransactionSigner}>) {
+                           otherSigners?: {index: number; signer: TransactionSigner}[]) {
   const txInner = getTransactionInsideBuilder(txB)
   const signerArray = txInner.ins.map(() => defaultSigner)
   if (otherSigners) {

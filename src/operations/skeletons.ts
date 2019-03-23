@@ -9,7 +9,7 @@ import { config } from '../config'
 
 // support v1 and v2 price API endpoint return values
 type AmountTypeV1 = number
-type AmountTypeV2 = { units: string, amount: BN }
+interface AmountTypeV2 { units: string; amount: BN }
 type AmountType = AmountTypeV1 | AmountTypeV2
 
 // todo : add name length / character verification
@@ -25,7 +25,7 @@ export class BlockstackNamespace {
 
   base: number
 
-  buckets: Array<number>
+  buckets: number[]
 
   nonalphaDiscount: number
 
@@ -92,7 +92,7 @@ export class BlockstackNamespace {
     this.base = base
   }
 
-  setBuckets(buckets: Array<number>) {
+  setBuckets(buckets: number[]) {
     if (buckets.length !== 16) {
       throw new Error('Invalid buckets: must have 16 entries')
     }

@@ -12,6 +12,7 @@ class Twitter extends Service {
     return baseUrls
   }
 
+  /* eslint-disable-next-line */
   static normalizeUrl(proof: any) {
     return ''
   }
