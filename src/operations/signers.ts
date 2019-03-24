@@ -43,15 +43,11 @@ export class PubkeyHashSigner implements TransactionSigner {
     return 1
   }
 
-  getAddress(): Promise<string> {
-    return Promise.resolve()
-      .then(() => ecPairToAddress(this.ecPair))
+  async getAddress(): Promise<string> {
+    return ecPairToAddress(this.ecPair)
   }
 
-  signTransaction(transaction: bitcoinjs.TransactionBuilder, inputIndex: number): Promise<void> {
-    return Promise.resolve()
-      .then(() => {
-        transaction.sign(inputIndex, this.ecPair)
-      })
+  async signTransaction(transaction: bitcoinjs.TransactionBuilder, inputIndex: number) {
+    transaction.sign(inputIndex, this.ecPair)
   }
 }

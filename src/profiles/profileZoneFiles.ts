@@ -4,7 +4,7 @@ import { extractProfile } from './profileTokens'
 import { Person } from './profileSchemas/person'
 import { Logger } from '../logger'
 
-export function makeProfileZoneFile(origin: string, tokenFileUrl: string) {
+export function makeProfileZoneFile(origin: string, tokenFileUrl: string): string {
   if (tokenFileUrl.indexOf('://') < 0) {
     throw new Error('Invalid token file url')
   }
@@ -61,49 +61,38 @@ export function getTokenFileUrl(zoneFileJson: any): string | null {
   return tokenFileUrl
 }
 
-export function resolveZoneFileToProfile(zoneFile: any, publicKeyOrAddress: string) {
-  return new Promise((resolve, reject) => {
-    let zoneFileJson = null
+export async function resolveZoneFileToProfile(
+  zoneFile: any, publicKeyOrAddress: string
+): Promise<any> {
+  let zoneFileJson = parseZoneFile(zoneFile)
+  if (!zoneFileJson.hasOwnProperty('$origin')) {
+    zoneFileJson = null
+  }
+
+  let tokenFileUrl: string | null = null
+  if (zoneFileJson && Object.keys(zoneFileJson).length > 0) {
+    tokenFileUrl = getTokenFileUrl(zoneFileJson)
+  } else {
+    let profile = null
+    profile = JSON.parse(zoneFile)
+    profile = Person.fromLegacyFormat(profile).profile()
+    return profile
+  }
+
+  if (tokenFileUrl) {
     try {
-      zoneFileJson = parseZoneFile(zoneFile)
-      if (!zoneFileJson.hasOwnProperty('$origin')) {
-        zoneFileJson = null
-      }
-    } catch (e) {
-      reject(e)
+      const response = await fetch(tokenFileUrl)
+      const responseText = await response.text()
+      const responseJson = JSON.parse(responseText)
+      const tokenRecords = responseJson
+      const profile = extractProfile(tokenRecords[0].token, publicKeyOrAddress)
+      return profile
+    } catch (error) {
+      Logger.error(`resolveZoneFileToProfile: error fetching token file ${tokenFileUrl}: ${error}`)
+      throw error
     }
-
-    let tokenFileUrl: string | null = null
-    if (zoneFileJson && Object.keys(zoneFileJson).length > 0) {
-      tokenFileUrl = getTokenFileUrl(zoneFileJson)
-    } else {
-      let profile = null
-      try {
-        profile = JSON.parse(zoneFile)
-        profile = Person.fromLegacyFormat(profile).profile()
-      } catch (error) {
-        reject(error)
-      }
-      resolve(profile)
-      return
-    }
-
-    if (tokenFileUrl) {
-      fetch(tokenFileUrl)
-        .then(response => response.text())
-        .then(responseText => JSON.parse(responseText))
-        .then((responseJson) => {
-          const tokenRecords = responseJson
-          const profile = extractProfile(tokenRecords[0].token, publicKeyOrAddress)
-          resolve(profile)
-        })
-        .catch((error) => {
-          Logger.error(`resolveZoneFileToProfile: error fetching token file ${tokenFileUrl}: ${error}`)
-          reject(error)
-        })
-    } else {
-      Logger.debug('Token file url not found. Resolving to blank profile.')
-      resolve({})
-    }
-  })
+  } else {
+    Logger.debug('Token file url not found. Resolving to blank profile.')
+    return {}
+  }
 }

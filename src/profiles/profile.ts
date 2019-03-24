@@ -30,9 +30,9 @@ export class Profile {
     return signProfileToken(this.toJSON(), privateKey)
   }
 
-  static validateSchema(profile: any, strict = false) {
+  static validateSchema(profile: any, strict = false): boolean {
     schemaDefinition.strict = strict
-    return inspector.validate(schemaDefinition, profile)
+    return inspector.validate(schemaDefinition, profile) as boolean
   }
 
   static fromToken(token: string, publicKeyOrAddress: string | null = null) {
@@ -44,7 +44,7 @@ export class Profile {
     return makeProfileZoneFile(domainName, tokenFileURL)
   }
 
-  static validateProofs(domainName: string) {
+  static async validateProofs(domainName: string): Promise<any[]> {
     return validateProofs(new Profile().toJSON(), domainName)
   }
 }

@@ -206,7 +206,7 @@ export class UserSession {
    * @return {Promise} that resolves to the user data object if successful and rejects
    * if handling the sign in request fails or there was no pending sign in request.
    */
-  handlePendingSignIn(authResponseToken: string = this.getAuthResponseToken()) {
+  async handlePendingSignIn(authResponseToken: string = this.getAuthResponseToken()) {
     const transitKey = this.store.getSessionData().transitKey
     const nameLookupURL = this.store.getSessionData().coreNode
     return authApp.handlePendingSignIn(nameLookupURL, authResponseToken, transitKey, this)
@@ -288,7 +288,7 @@ export class UserSession {
    * @return {Promise} that resolves if the operation succeed and rejects
    * if it failed
    */
-  putFile(path: string, content: string | Buffer, options?: storage.PutFileOptions) {
+  async putFile(path: string, content: string | Buffer, options?: storage.PutFileOptions) {
     return storage.putFile(path, content, options, this)
   }
 
@@ -308,7 +308,7 @@ export class UserSession {
    * @returns {Promise} that resolves to the raw data in the file
    * or rejects with an error
    */
-  getFile(path: string, options?: storage.GetFileOptions) {
+  async getFile(path: string, options?: storage.GetFileOptions) {
     return storage.getFile(path, options, this)
   }
 
@@ -324,7 +324,7 @@ export class UserSession {
    * blockstack.js's getNameInfo function instead.
    * @returns {Promise<string>} that resolves to the URL or rejects with an error
    */
-  getFileUrl(path: string, options?: {
+  async getFileUrl(path: string, options?: {
     username?: string;
     app?: string;
     zoneFileLookupURL?: string;
@@ -338,7 +338,7 @@ export class UserSession {
    * returns `true` to continue the listing operation or `false` to end it
    * @return {Promise} that resolves to the number of files listed
    */
-  listFiles(callback: (name: string) => boolean): Promise<number> {
+  async listFiles(callback: (name: string) => boolean): Promise<number> {
     return storage.listFiles(callback, this)
   }
 
@@ -352,8 +352,7 @@ export class UserSession {
     Promise.reject(new Error(`Delete of ${path} not supported by gaia hubs`))
   }
 
-
-  getOrSetLocalGaiaHubConnection(): Promise<GaiaHubConfig> {
+  async getOrSetLocalGaiaHubConnection(): Promise<GaiaHubConfig> {
     const sessionData = this.store.getSessionData()
     const userData = sessionData.userData
     if (!userData) {

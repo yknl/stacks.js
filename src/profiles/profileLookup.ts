@@ -11,26 +11,25 @@ import { config } from '../config'
  * blockstack.js getNameInfo function.
  * @returns {Promise} that resolves to a profile object
  */
-export function lookupProfile(username: string, zoneFileLookupURL?: string): Promise<any> {
+export async function lookupProfile(
+  username: string, zoneFileLookupURL?: string
+): Promise<any> {
   if (!username) {
     return Promise.reject()
   }
-  let lookupPromise
+  let responseJSON: any
   if (zoneFileLookupURL) {
     const url = `${zoneFileLookupURL.replace(/\/$/, '')}/${username}`
-    lookupPromise = fetch(url)
-      .then(response => response.json())
+    const response = await fetch(url)
+    responseJSON = await response.json()
   } else {
-    lookupPromise = config.network.getNameInfo(username)
+    responseJSON = await config.network.getNameInfo(username)
   }
-  return lookupPromise
-    .then((responseJSON) => {
-      if (responseJSON.hasOwnProperty('zonefile')
-          && responseJSON.hasOwnProperty('address')) {
-        return resolveZoneFileToProfile(responseJSON.zonefile, responseJSON.address)
-      } else {
-        throw new Error('Invalid zonefile lookup response: did not contain `address`'
-                        + ' or `zonefile` field')
-      }
-    })
+  if (responseJSON.hasOwnProperty('zonefile')
+    && responseJSON.hasOwnProperty('address')) {
+    return resolveZoneFileToProfile(responseJSON.zonefile, responseJSON.address)
+  } else {
+    throw new Error('Invalid zonefile lookup response: did not contain `address`'
+      + ' or `zonefile` field')
+  }
 }

@@ -65,18 +65,16 @@ module.exports = {
       "ImportDeclaration": "first",
       "CallExpression": { "arguments": "first" }
     }],
+    "@typescript-eslint/promise-function-async": "error",
 
     "@typescript-eslint/explicit-member-accessibility": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/class-name-casing": "off",
     "@typescript-eslint/camelcase": "off",
-    "@typescript-eslint/no-use-before-define": "off"
-    ,
-    // TODO: enable this when reasonable
-    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-use-before-define": "off",
 
     // TODO: enable this when reasonable
-    "@typescript-eslint/promise-function-async": "off",
+    "@typescript-eslint/no-explicit-any": "off",
 
     // TODO: enable when this is fixed https://github.com/benmosher/eslint-plugin-import/issues/1282
     "import/named": "off"

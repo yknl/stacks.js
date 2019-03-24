@@ -3,38 +3,34 @@ import 'cross-fetch/polyfill'
 import { containsValidProofStatement, containsValidAddressProofStatement } from './serviceUtils'
 
 export class Service {
-  static validateProof(proof: any,
-                       ownerAddress: string,
-                       name: string = null) {
+  static async validateProof(
+    proof: any,
+    ownerAddress: string,
+    name: string = null
+  ) {
     let proofUrl: string
-    return Promise.resolve()
-      .then(() => {
-        proofUrl = this.getProofUrl(proof)
-        return fetch(proofUrl)
-      })
-      .then((res) => {
-        if (res.status !== 200) {
-          throw new Error(`Proof url ${proofUrl} returned unexpected http status ${res.status}.
-              Unable to validate proof.`)
-        }
-        return res.text()
-      })
-      .then((text) => {
-        // Validate identity in provided proof body/tags if required
-        if (this.shouldValidateIdentityInBody()
-            && proof.identifier !== this.getProofIdentity(text)) {
-          return proof
-        }
-        const proofText = this.getProofStatement(text)
-        proof.valid = containsValidProofStatement(proofText, name)
-          || containsValidAddressProofStatement(proofText, ownerAddress)
+    try {
+      await Promise.resolve()
+      proofUrl = this.getProofUrl(proof)
+      const res = await fetch(proofUrl)
+      if (res.status !== 200) {
+        throw new Error(`Proof url ${proofUrl} returned unexpected http status ${res.status}.\nUnable to validate proof.`)
+      }
+      const text = await res.text()
+      // Validate identity in provided proof body/tags if required
+      if (this.shouldValidateIdentityInBody()
+        && proof.identifier !== this.getProofIdentity(text)) {
         return proof
-      })
-      .catch((error) => {
-        console.error(error)
-        proof.valid = false
-        return proof
-      })
+      }
+      const proofText = this.getProofStatement(text)
+      proof.valid = containsValidProofStatement(proofText, name)
+        || containsValidAddressProofStatement(proofText, ownerAddress)
+      return proof
+    } catch (error) {
+      console.error(error)
+      proof.valid = false
+      return proof
+    }
   }
 
   static getBaseUrls(): string[] {

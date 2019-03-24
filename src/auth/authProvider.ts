@@ -30,31 +30,23 @@ export function getAuthRequestFromURL() {
  * message.
  * @private
  */
-export function fetchAppManifest(authRequest: string): Promise<any> {
-  return new Promise((resolve, reject) => {
-    if (!authRequest) {
-      reject('Invalid auth request')
-    } else {
-      const payload = decodeToken(authRequest).payload
-      const manifestURI = payload.manifest_uri
-      try {
-        Logger.debug(`Fetching manifest from ${manifestURI}`)
-        fetch(manifestURI)
-          .then(response => response.text())
-          .then(responseText => JSON.parse(responseText))
-          .then((responseJSON) => {
-            resolve(responseJSON)
-          })
-          .catch((e) => {
-            Logger.debug(e.stack)
-            reject('Could not fetch manifest.json')
-          })
-      } catch (e) {
-        Logger.debug(e.stack)
-        reject('Could not fetch manifest.json')
-      }
+export async function fetchAppManifest(authRequest: string): Promise<any> {
+  if (!authRequest) {
+    throw new Error('Invalid auth request')
+  } else {
+    const payload = decodeToken(authRequest).payload
+    const manifestURI = payload.manifest_uri
+    try {
+      Logger.debug(`Fetching manifest from ${manifestURI}`)
+      const response = await fetch(manifestURI)
+      const responseText = await response.text()
+      const responseJSON = JSON.parse(responseText)
+      return responseJSON
+    } catch (e) {
+      Logger.debug(e.stack)
+      throw new Error('Could not fetch manifest.json')
     }
-  })
+  }
 }
 
 /**

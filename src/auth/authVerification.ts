@@ -75,42 +75,39 @@ export function doPublicKeysMatchIssuer(token: string) {
  * `Promise` resolves to `false`
  * @private
  */
-export function doPublicKeysMatchUsername(token: string,
-                                          nameLookupURL: string) {
-  return Promise.resolve().then(() => {
+export async function doPublicKeysMatchUsername(
+  token: string,
+  nameLookupURL: string) {
+  try {
     const payload = decodeToken(token).payload
-
     if (!payload.username) {
       return true
     }
-
     if (payload.username === null) {
       return true
     }
-
     if (nameLookupURL === null) {
       return false
     }
-
     const username = payload.username
     const url = `${nameLookupURL.replace(/\/$/, '')}/${username}`
-    return fetch(url)
-      .then(response => response.text())
-      .then((responseText) => {
-        const responseJSON = JSON.parse(responseText)
-        if (responseJSON.hasOwnProperty('address')) {
-          const nameOwningAddress = responseJSON.address
-          const addressFromIssuer = getAddressFromDID(payload.iss)
-          if (nameOwningAddress === addressFromIssuer) {
-            return true
-          } else {
-            return false
-          }
-        } else {
-          return false
-        }
-      })
-  }).catch(() => false)
+    const response = await fetch(url)
+    const responseText = await response.text()
+    const responseJSON = JSON.parse(responseText)
+    if (responseJSON.hasOwnProperty('address')) {
+      const nameOwningAddress = responseJSON.address
+      const addressFromIssuer = getAddressFromDID(payload.iss)
+      if (nameOwningAddress === addressFromIssuer) {
+        return true
+      } else {
+        return false
+      }
+    } else {
+      return false
+    }
+  } catch (e) {
+    return false
+  }
 }
 
 /**
@@ -200,25 +197,23 @@ export function isRedirectUriValid(token: string) {
  *  token is not signed
  *  @private
  */
-export function verifyAuthRequest(token: string) {
-  return Promise.resolve().then(() => {
-    if (decodeToken(token).header.alg === 'none') {
-      throw new Error('Token must be signed in order to be verified')
-    }
-  }).then(() => Promise.all([
+export async function verifyAuthRequest(token: string) {
+  if (decodeToken(token).header.alg === 'none') {
+    throw new Error('Token must be signed in order to be verified')
+  }
+  const values = await Promise.all([
     isExpirationDateValid(token),
     isIssuanceDateValid(token),
     doSignaturesMatchPublicKeys(token),
     doPublicKeysMatchIssuer(token),
     isManifestUriValid(token),
     isRedirectUriValid(token)
-  ])).then((values) => {
-    if (values.every(Boolean)) {
-      return true
-    } else {
-      return false
-    }
-  })
+  ])
+  if (values.every(Boolean)) {
+    return true
+  } else {
+    return false
+  }
 }
 
 /**
@@ -229,15 +224,13 @@ export function verifyAuthRequest(token: string) {
  * or rejects if the auth request or app manifest file is invalid
  * @private
  */
-export function verifyAuthRequestAndLoadManifest(token: string) {
-  return Promise.resolve().then(() => verifyAuthRequest(token)
-    .then((valid) => {
-      if (valid) {
-        return fetchAppManifest(token)
-      } else {
-        return Promise.reject()
-      }
-    }))
+export async function verifyAuthRequestAndLoadManifest(token: string) {
+  const valid = await verifyAuthRequest(token)
+  if (valid) {
+    return fetchAppManifest(token)
+  } else {
+    return Promise.reject()
+  }
 }
 
 /**
@@ -248,18 +241,17 @@ export function verifyAuthRequestAndLoadManifest(token: string) {
  * is valid and false if it does not
  * @private
  */
-export function verifyAuthResponse(token: string, nameLookupURL: string) {
-  return Promise.all([
+export async function verifyAuthResponse(token: string, nameLookupURL: string) {
+  const values = await Promise.all([
     isExpirationDateValid(token),
     isIssuanceDateValid(token),
     doSignaturesMatchPublicKeys(token),
     doPublicKeysMatchIssuer(token),
     doPublicKeysMatchUsername(token, nameLookupURL)
-  ]).then((values) => {
-    if (values.every(Boolean)) {
-      return true
-    } else {
-      return false
-    }
-  })
+  ])
+  if (values.every(Boolean)) {
+    return true
+  } else {
+    return false
+  }
 }

@@ -16,18 +16,20 @@ import { nextYear, makeUUID4, ecPairToAddress } from '../utils'
   * @param {Date} expiresAt - the time of expiration of the token
   * @returns {Object} - the signed profile token
   */
-export function signProfileToken(profile: any,
-                                 privateKey: string,
-                                 subject?: any,
-                                 issuer?: any,
-                                 signingAlgorithm = 'ES256K',
-                                 issuedAt = new Date(),
-                                 expiresAt = nextYear()) {
+export function signProfileToken(
+  profile: any,
+  privateKey: string,
+  subject?: any,
+  issuer?: any,
+  signingAlgorithm: string = 'ES256K',
+  issuedAt: Date = new Date(),
+  expiresAt: Date = nextYear()
+): object {
   if (signingAlgorithm !== 'ES256K') {
     throw new Error('Signing algorithm not supported')
   }
 
-  const publicKey = SECP256K1Client.derivePublicKey(privateKey)
+  const publicKey = SECP256K1Client.derivePublicKey(privateKey) as string
 
   if (!subject) {
     subject = { publicKey }
@@ -47,8 +49,7 @@ export function signProfileToken(profile: any,
     issuer,
     claim: profile
   }
-
-  return tokenSigner.sign(payload)
+  return tokenSigner.sign(payload) as any
 }
 
 /**
@@ -56,7 +57,7 @@ export function signProfileToken(profile: any,
   * @param {String} token - the token to be wrapped
   * @returns {Object} - including `token` and `decodedToken`
   */
-export function wrapProfileToken(token: string) {
+export function wrapProfileToken(token: string): object {
   return {
     token,
     decodedToken: decodeToken(token)
@@ -71,7 +72,7 @@ export function wrapProfileToken(token: string) {
   * @returns {Object} - the verified, decoded profile token
   * @throws {Error} - throws an error if token verification fails
   */
-export function verifyProfileToken(token: string, publicKeyOrAddress: string) {
+export function verifyProfileToken(token: string, publicKeyOrAddress: string): object {
   const decodedToken = decodeToken(token)
   const payload = decodedToken.payload
 
@@ -138,7 +139,7 @@ export function verifyProfileToken(token: string, publicKeyOrAddress: string) {
   * @returns {Object} - the profile extracted from the encoded token
   * @throws {Error} - if the token isn't signed by the provided `publicKeyOrAddress`
   */
-export function extractProfile(token: string, publicKeyOrAddress: string | null = null) {
+export function extractProfile(token: string, publicKeyOrAddress: string | null = null): object {
   let decodedToken
   if (publicKeyOrAddress) {
     decodedToken = verifyProfileToken(token, publicKeyOrAddress)

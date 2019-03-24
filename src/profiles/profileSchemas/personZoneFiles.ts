@@ -5,10 +5,11 @@ import { Person } from './person'
 import { getTokenFileUrl } from '../profileZoneFiles'
 import { extractProfile } from '../profileTokens'
 
-export function resolveZoneFileToPerson(
+export async function resolveZoneFileToPerson(
   zoneFile: any, 
   publicKeyOrAddress: string, 
-  callback: (profile: any) => void) {
+  callback: (profile: any) => void
+): Promise<void> {
   let zoneFileJson = null
   try {
     zoneFileJson = parseZoneFile(zoneFile)
@@ -37,19 +38,17 @@ export function resolveZoneFileToPerson(
   }
 
   if (tokenFileUrl) {
-    fetch(tokenFileUrl)
-      .then(response => response.text())
-      .then(responseText => JSON.parse(responseText))
-      .then((responseJson) => {
-        const tokenRecords = responseJson
-        const token = tokenRecords[0].token
-        const profile = extractProfile(token, publicKeyOrAddress)
-
-        callback(profile)
-      })
-      .catch((error) => {
-        console.warn(error)
-      })
+    try {
+      const response = await fetch(tokenFileUrl)
+      const responseText = await response.text()
+      const responseJson = JSON.parse(responseText)
+      const tokenRecords = responseJson
+      const token = tokenRecords[0].token
+      const profile = extractProfile(token, publicKeyOrAddress)
+      callback(profile)
+    } catch (error) {
+      console.warn(error)
+    }
   } else {
     console.warn('Token file url not found')
     callback({})

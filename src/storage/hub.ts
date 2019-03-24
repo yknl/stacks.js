@@ -41,8 +41,10 @@ export async function uploadToGaiaHub(
   return responseJSON.publicURL
 }
 
-export function getFullReadUrl(filename: string,
-                               hubConfig: GaiaHubConfig): Promise<string> {
+export async function getFullReadUrl(
+  filename: string,
+  hubConfig: GaiaHubConfig
+): Promise<string> {
   return Promise.resolve(`${hubConfig.url_prefix}${hubConfig.address}/${filename}`)
 }
 

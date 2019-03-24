@@ -3,11 +3,11 @@ import cheerio from 'cheerio'
 import { Service } from './service'
 
 class Facebook extends Service {
-  static getProofUrl(proof: any) {
+  static getProofUrl(proof: any): string {
     return this.normalizeUrl(proof)
   }
 
-  static normalizeUrl(proof: any) {
+  static normalizeUrl(proof: any): string {
     let proofUrl = proof.proof_url.toLowerCase()
     const urlRegex = /(?:http[s]*:\/\/){0,1}(?:[a-zA-Z0-9-]+\.)+facebook\.com/
 

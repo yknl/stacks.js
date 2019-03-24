@@ -178,9 +178,11 @@ export function addUTXOsToFund(txBuilderIn: bitcoinjs.TransactionBuilder,
 }
 
 
-export function signInputs(txB: bitcoinjs.TransactionBuilder,
-                           defaultSigner: TransactionSigner,
-                           otherSigners?: {index: number; signer: TransactionSigner}[]) {
+export async function signInputs(
+  txB: bitcoinjs.TransactionBuilder,
+  defaultSigner: TransactionSigner,
+  otherSigners?: {index: number; signer: TransactionSigner}[]
+): Promise<bitcoinjs.TransactionBuilder> {
   const txInner = getTransactionInsideBuilder(txB)
   const signerArray = txInner.ins.map(() => defaultSigner)
   if (otherSigners) {
@@ -188,11 +190,9 @@ export function signInputs(txB: bitcoinjs.TransactionBuilder,
       signerArray[signerPair.index] = signerPair.signer
     })
   }
-  let signingPromise = Promise.resolve()
   for (let i = 0; i < txInner.ins.length; i++) {
-    signingPromise = signingPromise.then(
-      () => signerArray[i].signTransaction(txB, i)
-    )
+    /* eslint-disable-next-line */
+    await signerArray[i].signTransaction(txB, i)
   }
-  return signingPromise.then(() => txB)
+  return txB
 }

@@ -20,7 +20,7 @@ export class CreativeWork extends Profile {
     }, this._profile)
   }
 
-  static validateSchema(profile: any, strict = false) {
+  static validateSchema(profile: any, strict = false): boolean {
     schemaDefinition.strict = strict
     return inspector.validate(schemaDefinition, profile)
   }

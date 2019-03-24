@@ -19,20 +19,20 @@ const TX_BROADCAST_SERVICE_REGISTRATION_ENDPOINT = 'registration'
 const TX_BROADCAST_SERVICE_TX_ENDPOINT = 'transaction'
 
 export class BitcoinNetwork {
-  broadcastTransaction(transaction: string): Promise<any> {
-    return Promise.reject(new Error(`Not implemented, broadcastTransaction(${transaction})`))
+  async broadcastTransaction(transaction: string): Promise<any> {
+    throw new Error(`Not implemented, broadcastTransaction(${transaction})`)
   }
 
-  getBlockHeight(): Promise<number> {
-    return Promise.reject(new Error('Not implemented, getBlockHeight()'))
+  async getBlockHeight(): Promise<number> {
+    throw new Error('Not implemented, getBlockHeight()')
   }
 
-  getTransactionInfo(txid: string): Promise<{block_height: number}> {
-    return Promise.reject(new Error(`Not implemented, getTransactionInfo(${txid})`))
+  async getTransactionInfo(txid: string): Promise<{block_height: number}> {
+    throw new Error(`Not implemented, getTransactionInfo(${txid})`)
   }
 
-  getNetworkedUTXOs(address: string): Promise<UTXO[]> {
-    return Promise.reject(new Error(`Not implemented, getNetworkedUTXOs(${address})`))
+  async getNetworkedUTXOs(address: string): Promise<UTXO[]> {
+    throw new Error(`Not implemented, getNetworkedUTXOs(${address})`)
   }
 }
 
@@ -94,32 +94,25 @@ export class BlockstackNetwork {
    * @return {Promise} a promise to an Object with { units: String, amount: BigInteger }
    * @private
    */
-  getNamePriceV1(fullyQualifiedName: string): Promise<{units: string; amount: BN}> {
+  async getNamePriceV1(fullyQualifiedName: string): Promise<{units: string; amount: BN}> {
     // legacy code path
-    return fetch(`${this.blockstackAPIUrl}/v1/prices/names/${fullyQualifiedName}`)
-      .then((resp) => {
-        if (!resp.ok) {
-          throw new Error(`Failed to query name price for ${fullyQualifiedName}`)
-        }
-        return resp
-      })
-      .then(resp => resp.json())
-      .then(resp => resp.name_price)
-      .then((namePrice) => {
-        if (!namePrice || !namePrice.satoshis) {
-          throw new Error(
-            `Failed to get price for ${fullyQualifiedName}. Does the namespace exist?`
-          )
-        }
-        if (namePrice.satoshis < this.DUST_MINIMUM) {
-          namePrice.satoshis = this.DUST_MINIMUM
-        }
-        const result = {
-          units: 'BTC',
-          amount: new BN(String(namePrice.satoshis))
-        }
-        return result
-      })
+    const resp = await fetch(`${this.blockstackAPIUrl}/v1/prices/names/${fullyQualifiedName}`)
+    if (!resp.ok) {
+      throw new Error(`Failed to query name price for ${fullyQualifiedName}`)
+    }
+    const respJson = await resp.json()
+    const namePrice = respJson.name_price
+    if (!namePrice || !namePrice.satoshis) {
+      throw new Error(`Failed to get price for ${fullyQualifiedName}. Does the namespace exist?`)
+    }
+    if (namePrice.satoshis < this.DUST_MINIMUM) {
+      namePrice.satoshis = this.DUST_MINIMUM
+    }
+    const result = {
+      units: 'BTC',
+      amount: new BN(String(namePrice.satoshis))
+    }
+    return result
   }
 
   /**
@@ -128,29 +121,24 @@ export class BlockstackNetwork {
    * @return {Promise} a promise to an Object with { units: String, amount: BigInteger }
    * @private
    */
-  getNamespacePriceV1(namespaceID: string): Promise<{units: string; amount: BN}> {
+  async getNamespacePriceV1(namespaceID: string): Promise<{units: string; amount: BN}> {
     // legacy code path
-    return fetch(`${this.blockstackAPIUrl}/v1/prices/namespaces/${namespaceID}`)
-      .then((resp) => {
-        if (!resp.ok) {
-          throw new Error(`Failed to query name price for ${namespaceID}`)
-        }
-        return resp
-      })
-      .then(resp => resp.json())
-      .then((namespacePrice) => {
-        if (!namespacePrice || !namespacePrice.satoshis) {
-          throw new Error(`Failed to get price for ${namespaceID}`)
-        }
-        if (namespacePrice.satoshis < this.DUST_MINIMUM) {
-          namespacePrice.satoshis = this.DUST_MINIMUM
-        }
-        const result = {
-          units: 'BTC',
-          amount: new BN(String(namespacePrice.satoshis))
-        }
-        return result
-      })
+    const resp = await fetch(`${this.blockstackAPIUrl}/v1/prices/namespaces/${namespaceID}`)
+    if (!resp.ok) {
+      throw new Error(`Failed to query name price for ${namespaceID}`)
+    }
+    const namespacePrice = await resp.json()
+    if (!namespacePrice || !namespacePrice.satoshis) {
+      throw new Error(`Failed to get price for ${namespaceID}`)
+    }
+    if (namespacePrice.satoshis < this.DUST_MINIMUM) {
+      namespacePrice.satoshis = this.DUST_MINIMUM
+    }
+    const result = {
+      units: 'BTC',
+      amount: new BN(String(namespacePrice.satoshis))
+    }
+    return result
   }
   
   /**
@@ -159,36 +147,29 @@ export class BlockstackNetwork {
    * @return {Promise} a promise to an Object with { units: String, amount: BigInteger }
    * @private
    */
-  getNamePriceV2(fullyQualifiedName: string): Promise<{units: string; amount: BN}> {
-    return fetch(`${this.blockstackAPIUrl}/v2/prices/names/${fullyQualifiedName}`)
-      .then((resp) => {
-        if (resp.status !== 200) {
-          // old core node 
-          throw new Error('The upstream node does not handle the /v2/ price namespace')
-        }
-        return resp
-      })
-      .then(resp => resp.json())
-      .then(resp => resp.name_price)
-      .then((namePrice) => {
-        if (!namePrice) {
-          throw new Error(
-            `Failed to get price for ${fullyQualifiedName}. Does the namespace exist?`
-          )
-        }
-        const result = {
-          units: namePrice.units,
-          amount: new BN(namePrice.amount)
-        }
-        if (namePrice.units === 'BTC') {
-          // must be at least dust-minimum
-          const dustMin = new BN(String(this.DUST_MINIMUM))
-          if (result.amount.ucmp(dustMin) < 0) {
-            result.amount = dustMin
-          }
-        }
-        return result
-      })
+  async getNamePriceV2(fullyQualifiedName: string): Promise<{units: string; amount: BN}> {
+    const resp = await fetch(`${this.blockstackAPIUrl}/v2/prices/names/${fullyQualifiedName}`)
+    if (resp.status !== 200) {
+      // old core node 
+      throw new Error('The upstream node does not handle the /v2/ price namespace')
+    }
+    const respJson = await resp.json()
+    const namePrice = respJson.name_price
+    if (!namePrice) {
+      throw new Error(`Failed to get price for ${fullyQualifiedName}. Does the namespace exist?`)
+    }
+    const result = {
+      units: namePrice.units,
+      amount: new BN(namePrice.amount)
+    }
+    if (namePrice.units === 'BTC') {
+      // must be at least dust-minimum
+      const dustMin = new BN(String(this.DUST_MINIMUM))
+      if (result.amount.ucmp(dustMin) < 0) {
+        result.amount = dustMin
+      }
+    }
+    return result
   }
 
   /**
@@ -197,33 +178,28 @@ export class BlockstackNetwork {
    * @return {Promise} a promise to an Object with { units: String, amount: BigInteger }
    * @private
    */
-  getNamespacePriceV2(namespaceID: string): Promise<{units: string; amount: BN}> {
-    return fetch(`${this.blockstackAPIUrl}/v2/prices/namespaces/${namespaceID}`)
-      .then((resp) => {
-        if (resp.status !== 200) {
-          // old core node 
-          throw new Error('The upstream node does not handle the /v2/ price namespace')
-        }
-        return resp
-      })
-      .then(resp => resp.json())
-      .then((namespacePrice) => {
-        if (!namespacePrice) {
-          throw new Error(`Failed to get price for ${namespaceID}`)
-        }
-        const result = {
-          units: namespacePrice.units,
-          amount: new BN(namespacePrice.amount)
-        }
-        if (namespacePrice.units === 'BTC') {
-          // must be at least dust-minimum
-          const dustMin = new BN(String(this.DUST_MINIMUM))
-          if (result.amount.ucmp(dustMin) < 0) {
-            result.amount = dustMin
-          }
-        }
-        return result
-      })
+  async getNamespacePriceV2(namespaceID: string): Promise<{units: string; amount: BN}> {
+    const resp = await fetch(`${this.blockstackAPIUrl}/v2/prices/namespaces/${namespaceID}`)
+    if (resp.status !== 200) {
+      // old core node 
+      throw new Error('The upstream node does not handle the /v2/ price namespace')
+    }
+    const namespacePrice = await resp.json()
+    if (!namespacePrice) {
+      throw new Error(`Failed to get price for ${namespaceID}`)
+    }
+    const result = {
+      units: namespacePrice.units,
+      amount: new BN(namespacePrice.amount)
+    }
+    if (namespacePrice.units === 'BTC') {
+      // must be at least dust-minimum
+      const dustMin = new BN(String(this.DUST_MINIMUM))
+      if (result.amount.ucmp(dustMin) < 0) {
+        result.amount = dustMin
+      }
+    }
+    return result
   }
 
   /**
@@ -235,10 +211,13 @@ export class BlockstackNetwork {
    *   (e.g. if .units is BTC, .amount will be satoshis; if .units is STACKS, 
    *   .amount will be microStacks)
    */
-  getNamePrice(fullyQualifiedName: string): Promise<{units: string; amount: BN}> {
+  async getNamePrice(fullyQualifiedName: string): Promise<{units: string; amount: BN}> {
     // handle v1 or v2 
-    return Promise.resolve().then(() => this.getNamePriceV2(fullyQualifiedName))
-      .catch(() => this.getNamePriceV1(fullyQualifiedName))
+    try {
+      return await this.getNamePriceV2(fullyQualifiedName)
+    } catch (e) {
+      return this.getNamePriceV1(fullyQualifiedName)
+    }
   }
 
   /**
@@ -250,10 +229,13 @@ export class BlockstackNetwork {
    *   (e.g. if .units is BTC, .amount will be satoshis; if .units is STACKS, 
    *   .amount will be microStacks)
    */
-  getNamespacePrice(namespaceID: string): Promise<{units: string; amount: BN}> {
+  async getNamespacePrice(namespaceID: string): Promise<{units: string; amount: BN}> {
     // handle v1 or v2 
-    return Promise.resolve().then(() => this.getNamespacePriceV2(namespaceID))
-      .catch(() => this.getNamespacePriceV1(namespaceID))
+    try {
+      return await this.getNamespacePriceV2(namespaceID)
+    } catch (e) {
+      return this.getNamespacePriceV1(namespaceID)
+    }
   }
 
   /**
@@ -272,11 +254,11 @@ export class BlockstackNetwork {
    * @param {String} address the blockchain address (the hash of the owner public key)
    * @return {Promise} a promise that resolves to a list of names (Strings)
    */
-  getNamesOwned(address: string): Promise<string[]> {
+  async getNamesOwned(address: string): Promise<string[]> {
     const networkAddress = this.coerceAddress(address)
-    return fetch(`${this.blockstackAPIUrl}/v1/addresses/bitcoin/${networkAddress}`)
-      .then(resp => resp.json())
-      .then(obj => obj.names)
+    const resp = await fetch(`${this.blockstackAPIUrl}/v1/addresses/bitcoin/${networkAddress}`)
+    const obj = await resp.json()
+    return obj.names
   }
 
   /**
@@ -285,29 +267,23 @@ export class BlockstackNetwork {
    * @param {String} namespace the namespace ID
    * @return {Promise} a promise that resolves to an address (String)
    */
-  getNamespaceBurnAddress(namespace: string) {
-    return Promise.all([
+  async getNamespaceBurnAddress(namespace: string) {
+    const [resp, blockHeight] = await Promise.all([
       fetch(`${this.blockstackAPIUrl}/v1/namespaces/${namespace}`),
       this.getBlockHeight()
     ])
-      .then(([resp, blockHeight]) => {
-        if (resp.status === 404) {
-          throw new Error(`No such namespace '${namespace}'`)
-        } else {
-          return Promise.all([resp.json(), blockHeight])
-        }
-      })
-      .then(([namespaceInfo, blockHeight]) => {
-        let address = this.getDefaultBurnAddress()
-        if (namespaceInfo.version === 2) {
-          // pay-to-namespace-creator if this namespace is less than 1 year old
-          if (namespaceInfo.reveal_block + 52595 >= blockHeight) {
-            address = namespaceInfo.address
-          }
-        }
-        return address
-      })
-      .then(address => this.coerceAddress(address))
+    if (resp.status === 404) {
+      throw new Error(`No such namespace '${namespace}'`)
+    }
+    const namespaceInfo = await resp.json()
+    let address = this.getDefaultBurnAddress()
+    if (namespaceInfo.version === 2) {
+      // pay-to-namespace-creator if this namespace is less than 1 year old
+      if (namespaceInfo.reveal_block + 52595 >= blockHeight) {
+        address = namespaceInfo.address
+      }
+    }
+    return this.coerceAddress(address)
   }
 
   /**
@@ -316,30 +292,25 @@ export class BlockstackNetwork {
    * @param {String} fullyQualifiedName the name to query.  Can be on-chain of off-chain.
    * @return {Promise} a promise that resolves to the WHOIS-like information 
    */
-  getNameInfo(fullyQualifiedName: string) {
+  async getNameInfo(fullyQualifiedName: string) {
     Logger.debug(this.blockstackAPIUrl)
     const nameLookupURL = `${this.blockstackAPIUrl}/v1/names/${fullyQualifiedName}`
-    return fetch(nameLookupURL)
-      .then((resp) => {
-        if (resp.status === 404) {
-          throw new Error('Name not found')
-        } else if (resp.status !== 200) {
-          throw new Error(`Bad response status: ${resp.status}`)
-        } else {
-          return resp.json()
-        }
-      })
-      .then((nameInfo) => {
-        Logger.debug(`nameInfo: ${JSON.stringify(nameInfo)}`)
-        // the returned address _should_ be in the correct network ---
-        //  blockstackd gets into trouble because it tries to coerce back to mainnet
-        //  and the regtest transaction generation libraries want to use testnet addresses
-        if (nameInfo.address) {
-          return Object.assign({}, nameInfo, { address: this.coerceAddress(nameInfo.address) })
-        } else {
-          return nameInfo
-        }
-      })
+    const resp = await fetch(nameLookupURL)
+    if (resp.status === 404) {
+      throw new Error('Name not found')
+    } else if (resp.status !== 200) {
+      throw new Error(`Bad response status: ${resp.status}`)
+    }
+    const nameInfo = await resp.json()
+    Logger.debug(`nameInfo: ${JSON.stringify(nameInfo)}`)
+    // the returned address _should_ be in the correct network ---
+    //  blockstackd gets into trouble because it tries to coerce back to mainnet
+    //  and the regtest transaction generation libraries want to use testnet addresses
+    if (nameInfo.address) {
+      return Object.assign({}, nameInfo, { address: this.coerceAddress(nameInfo.address) })
+    } else {
+      return nameInfo
+    }
   }
 
   /**
@@ -347,30 +318,25 @@ export class BlockstackNetwork {
    * @param {String} namespaceID the namespace to query
    * @return {Promise} a promise that resolves to the namespace information.
    */
-  getNamespaceInfo(namespaceID: string) {
-    return fetch(`${this.blockstackAPIUrl}/v1/namespaces/${namespaceID}`)
-      .then((resp) => {
-        if (resp.status === 404) {
-          throw new Error('Namespace not found')
-        } else if (resp.status !== 200) {
-          throw new Error(`Bad response status: ${resp.status}`)
-        } else {
-          return resp.json()
-        }
+  async getNamespaceInfo(namespaceID: string) {
+    const resp = await fetch(`${this.blockstackAPIUrl}/v1/namespaces/${namespaceID}`)
+    if (resp.status === 404) {
+      throw new Error('Namespace not found')
+    } else if (resp.status !== 200) {
+      throw new Error(`Bad response status: ${resp.status}`)
+    }
+    const namespaceInfo = await resp.json()
+    // the returned address _should_ be in the correct network ---
+    //  blockstackd gets into trouble because it tries to coerce back to mainnet
+    //  and the regtest transaction generation libraries want to use testnet addresses
+    if (namespaceInfo.address && namespaceInfo.recipient_address) {
+      return Object.assign({}, namespaceInfo, {
+        address: this.coerceAddress(namespaceInfo.address),
+        recipient_address: this.coerceAddress(namespaceInfo.recipient_address)
       })
-      .then((namespaceInfo) => {
-        // the returned address _should_ be in the correct network ---
-        //  blockstackd gets into trouble because it tries to coerce back to mainnet
-        //  and the regtest transaction generation libraries want to use testnet addresses
-        if (namespaceInfo.address && namespaceInfo.recipient_address) {
-          return Object.assign({}, namespaceInfo, {
-            address: this.coerceAddress(namespaceInfo.address),
-            recipient_address: this.coerceAddress(namespaceInfo.recipient_address)
-          })
-        } else {
-          return namespaceInfo
-        }
-      })
+    } else {
+      return namespaceInfo
+    }
   }
 
   /**
@@ -379,23 +345,18 @@ export class BlockstackNetwork {
    * @param {String} zonefileHash the ripemd160(sha256) hash of the zone file
    * @return {Promise} a promise that resolves to the zone file's text
    */
-  getZonefile(zonefileHash: string) {
-    return fetch(`${this.blockstackAPIUrl}/v1/zonefiles/${zonefileHash}`)
-      .then((resp) => {
-        if (resp.status === 200) {
-          return resp.text()
-            .then((body) => {
-              const sha256 = bitcoinjs.crypto.sha256(Buffer.from(body))
-              const h = (new RIPEMD160()).update(sha256).digest('hex')
-              if (h !== zonefileHash) {
-                throw new Error(`Zone file contents hash to ${h}, not ${zonefileHash}`)
-              }
-              return body
-            })
-        } else {
-          throw new Error(`Bad response status: ${resp.status}`)
-        }
-      })
+  async getZonefile(zonefileHash: string) {
+    const resp = await fetch(`${this.blockstackAPIUrl}/v1/zonefiles/${zonefileHash}`)
+    if (resp.status !== 200) {
+      throw new Error(`Bad response status: ${resp.status}`)
+    }
+    const body = await resp.text()
+    const sha256 = bitcoinjs.crypto.sha256(Buffer.from(body))
+    const h = (new RIPEMD160()).update(sha256).digest('hex')
+    if (h !== zonefileHash) {
+      throw new Error(`Zone file contents hash to ${h}, not ${zonefileHash}`)
+    }
+    return body
   }
 
   /**
@@ -406,25 +367,21 @@ export class BlockstackNetwork {
    * @return {Promise} a promise that resolves to an object representing the state of the account
    *   for this token
    */
-  getAccountStatus(address: string, tokenType: string) {
-    return fetch(`${this.blockstackAPIUrl}/v1/accounts/${address}/${tokenType}/status`)
-      .then((resp) => {
-        if (resp.status === 404) {
-          throw new Error('Account not found')
-        } else if (resp.status !== 200) {
-          throw new Error(`Bad response status: ${resp.status}`)
-        } else {
-          return resp.json()
-        }
-      }).then((accountStatus) => {
-        // coerce all addresses, and convert credit/debit to biginteger
-        const formattedStatus = Object.assign({}, accountStatus, {
-          address: this.coerceAddress(accountStatus.address),
-          debit_value: new BN(String(accountStatus.debit_value)),
-          credit_value: new BN(String(accountStatus.credit_value))
-        })
-        return formattedStatus
-      })
+  async getAccountStatus(address: string, tokenType: string) {
+    const resp = await fetch(`${this.blockstackAPIUrl}/v1/accounts/${address}/${tokenType}/status`)
+    if (resp.status === 404) {
+      throw new Error('Account not found')
+    } else if (resp.status !== 200) {
+      throw new Error(`Bad response status: ${resp.status}`)
+    }
+    const accountStatus = await resp.json()
+    // coerce all addresses, and convert credit/debit to biginteger
+    const formattedStatus = Object.assign({}, accountStatus, {
+      address: this.coerceAddress(accountStatus.address),
+      debit_value: new BN(String(accountStatus.debit_value)),
+      credit_value: new BN(String(accountStatus.credit_value))
+    })
+    return formattedStatus
   }
   
   
@@ -435,31 +392,33 @@ export class BlockstackNetwork {
    * @return {Promise} a promise that resolves to an Array of Objects, where each Object encodes
    *   states of the account at various block heights (e.g. prior balances, txids, etc)
    */
-  getAccountHistoryPage(address: string,
-                        page: number): Promise<any[]> {
+  async getAccountHistoryPage(
+    address: string,
+    page: number
+  ): Promise<any[]> {
     const url = `${this.blockstackAPIUrl}/v1/accounts/${address}/history?page=${page}`
-    return fetch(url)
-      .then((resp) => {
-        if (resp.status === 404) {
-          throw new Error('Account not found')
-        } else if (resp.status !== 200) {
-          throw new Error(`Bad response status: ${resp.status}`)
-        } else {
-          return resp.json()
-        }
-      })
-      .then((historyList) => {
-        if (historyList.error) {
-          throw new Error(`Unable to get account history page: ${historyList.error}`)
-        }
-        // coerse all addresses and convert to bigint
-        return historyList.map((histEntry: any) => {
-          histEntry.address = this.coerceAddress(histEntry.address)
-          histEntry.debit_value = new BN(String(histEntry.debit_value))
-          histEntry.credit_value = new BN(String(histEntry.credit_value))
-          return histEntry
-        })
-      })
+    const resp = await fetch(url)
+    if (resp.status === 404) {
+      throw new Error('Account not found')
+    } else if (resp.status !== 200) {
+      throw new Error(`Bad response status: ${resp.status}`)
+    }
+    const historyList: {
+      address: any; 
+      debit_value: any; 
+      credit_value: any;
+    }[] & { error: any } = await resp.json()
+
+    if (historyList.error) {
+      throw new Error(`Unable to get account history page: ${historyList.error}`)
+    }
+    // coerse all addresses and convert to bigint
+    return historyList.map((histEntry) => {
+      histEntry.address = this.coerceAddress(histEntry.address)
+      histEntry.debit_value = new BN(String(histEntry.debit_value))
+      histEntry.credit_value = new BN(String(histEntry.credit_value))
+      return histEntry
+    })
   }
 
   /**
@@ -471,30 +430,30 @@ export class BlockstackNetwork {
    * @return {Promise} a promise that resolves to an Array of Objects, where each Object encodes
    *   states of the account at this block.
    */
-  getAccountAt(address: string, blockHeight: number): Promise<any[]> {
+  async getAccountAt(address: string, blockHeight: number): Promise<any[]> {
     const url = `${this.blockstackAPIUrl}/v1/accounts/${address}/history/${blockHeight}`
-    return fetch(url)
-      .then((resp) => {
-        if (resp.status === 404) {
-          throw new Error('Account not found')
-        } else if (resp.status !== 200) {
-          throw new Error(`Bad response status: ${resp.status}`)
-        } else {
-          return resp.json()
-        }
-      })
-      .then((historyList) => {
-        if (historyList.error) {
-          throw new Error(`Unable to get historic account state: ${historyList.error}`)
-        }
-        // coerce all addresses 
-        return historyList.map((histEntry: any) => {
-          histEntry.address = this.coerceAddress(histEntry.address)
-          histEntry.debit_value = new BN(String(histEntry.debit_value))
-          histEntry.credit_value = new BN(String(histEntry.credit_value))
-          return histEntry
-        })
-      })
+    const resp = await fetch(url)
+    if (resp.status === 404) {
+      throw new Error('Account not found')
+    } else if (resp.status !== 200) {
+      throw new Error(`Bad response status: ${resp.status}`)
+    }
+    const historyList: {
+      address: any; 
+      debit_value: any; 
+      credit_value: any;
+    }[] & { error: any } = await resp.json()
+
+    if (historyList.error) {
+      throw new Error(`Unable to get historic account state: ${historyList.error}`)
+    }
+    // coerce all addresses 
+    return historyList.map((histEntry) => {
+      histEntry.address = this.coerceAddress(histEntry.address)
+      histEntry.debit_value = new BN(String(histEntry.debit_value))
+      histEntry.credit_value = new BN(String(histEntry.credit_value))
+      return histEntry
+    })
   }
 
   /**
@@ -503,23 +462,18 @@ export class BlockstackNetwork {
    * @return {Promise} a promise that resolves to an Array of Strings, where each item encodes the 
    *   type of token this account holds (excluding the underlying blockchain's tokens)
    */
-  getAccountTokens(address: string): Promise<string[]> {
-    return fetch(`${this.blockstackAPIUrl}/v1/accounts/${address}/tokens`)
-      .then((resp) => {
-        if (resp.status === 404) {
-          throw new Error('Account not found')
-        } else if (resp.status !== 200) {
-          throw new Error(`Bad response status: ${resp.status}`)
-        } else {
-          return resp.json()
-        }
-      })
-      .then((tokenList) => {
-        if (tokenList.error) {
-          throw new Error(`Unable to get token list: ${tokenList.error}`)
-        }
-        return tokenList
-      })
+  async getAccountTokens(address: string): Promise<string[]> {
+    const resp = await fetch(`${this.blockstackAPIUrl}/v1/accounts/${address}/tokens`)
+    if (resp.status === 404) {
+      throw new Error('Account not found')
+    } else if (resp.status !== 200) {
+      throw new Error(`Bad response status: ${resp.status}`)
+    }
+    const tokenList = await resp.json()
+    if (tokenList.error) {
+      throw new Error(`Unable to get token list: ${tokenList.error}`)
+    }
+    return tokenList
   }
 
   /**
@@ -530,30 +484,24 @@ export class BlockstackNetwork {
    * @return {Promise} a promise that resolves to a BigInteger that encodes the number of tokens 
    *   held by this account.
    */
-  getAccountBalance(address: string, tokenType: string): Promise<BN> {
-    return fetch(`${this.blockstackAPIUrl}/v1/accounts/${address}/${tokenType}/balance`)
-      .then((resp) => {
-        if (resp.status === 404) {
-          // talking to an older blockstack core node without the accounts API
-          return Promise.resolve().then(() => new BN('0'))
-        } else if (resp.status !== 200) {
-          throw new Error(`Bad response status: ${resp.status}`)
-        } else {
-          return resp.json()
-        }
-      })
-      .then((tokenBalance) => {
-        if (tokenBalance.error) {
-          throw new Error(`Unable to get account balance: ${tokenBalance.error}`)
-        }
-        let balance = '0'
-        if (tokenBalance && tokenBalance.balance) {
-          balance = tokenBalance.balance
-        }
-        return new BN(balance)
-      })
+  async getAccountBalance(address: string, tokenType: string): Promise<BN> {
+    const resp = await fetch(`${this.blockstackAPIUrl}/v1/accounts/${address}/${tokenType}/balance`)
+    if (resp.status === 404) {
+      // talking to an older blockstack core node without the accounts API
+      return new BN('0')
+    } else if (resp.status !== 200) {
+      throw new Error(`Bad response status: ${resp.status}`)
+    }
+    const tokenBalance = await resp.json()
+    if (tokenBalance.error) {
+      throw new Error(`Unable to get account balance: ${tokenBalance.error}`)
+    }
+    let balance = '0'
+    if (tokenBalance && tokenBalance.balance) {
+      balance = tokenBalance.balance
+    }
+    return new BN(balance)
   }
-
 
   /**
    * Performs a POST request to the given URL
@@ -568,7 +516,7 @@ export class BlockstackNetwork {
    *
    * @private
    */
-  broadcastServiceFetchHelper(endpoint: string, body: any): Promise<any|Error> {
+  async broadcastServiceFetchHelper(endpoint: string, body: any): Promise<any|Error> {
     const requestHeaders = {
       Accept: 'application/json',
       'Content-Type': 'application/json'
@@ -581,14 +529,12 @@ export class BlockstackNetwork {
     }
 
     const url = `${this.broadcastServiceUrl}/v1/broadcast/${endpoint}`
-    return fetch(url, options)
-      .then((response) => {
-        if (response.ok) {
-          return response.json()
-        } else {
-          throw new RemoteServiceError(response)
-        }
-      })
+    const response = await fetch(url, options)
+    if (response.ok) {
+      return response.json()
+    } else {
+      throw new RemoteServiceError(response)
+    }
   }
 
   /**
@@ -610,17 +556,17 @@ export class BlockstackNetwork {
   *   parameter
   * @private
   */
-  broadcastTransaction(transaction: string,
-                       transactionToWatch: string = null,
-                       confirmations: number = 6) {
+  async broadcastTransaction(
+    transaction: string,
+    transactionToWatch: string = null,
+    confirmations: number = 6
+  ) {
     if (!transaction) {
-      const error = new MissingParameterError('transaction')
-      return Promise.reject(error)
+      throw new MissingParameterError('transaction')
     }
 
     if (!confirmations && confirmations !== 0) {
-      const error = new MissingParameterError('confirmations')
-      return Promise.reject(error)
+      throw new MissingParameterError('confirmations')
     }
 
     if (transactionToWatch === null) {
@@ -663,10 +609,11 @@ export class BlockstackNetwork {
    *   parameter
    * @private
    */
-  broadcastZoneFile(zoneFile?: string,
-                    transactionToWatch: string = null) {
+  async broadcastZoneFile(
+    zoneFile?: string,
+    transactionToWatch: string = null) {
     if (!zoneFile) {
-      return Promise.reject(new MissingParameterError('zoneFile'))
+      throw new MissingParameterError('zoneFile')
     }
 
     // TODO: validate zonefile
@@ -689,32 +636,24 @@ export class BlockstackNetwork {
       }
 
       const endpoint = TX_BROADCAST_SERVICE_ZONE_FILE_ENDPOINT
-
       return this.broadcastServiceFetchHelper(endpoint, requestBody)
     } else {
       // broadcast via core endpoint
-
       // zone file is two words but core's api treats it as one word 'zonefile'
       const requestBody = { zonefile: zoneFile }
-
-      return fetch(`${this.blockstackAPIUrl}/v1/zonefile/`,
-                   {
-                     method: 'POST',
-                     body: JSON.stringify(requestBody),
-                     headers: {
-                       'Content-Type': 'application/json'
-                     }
-                   })
-        .then((resp) => {
-          const json = resp.json()
-          return json
-            .then((respObj) => {
-              if (respObj.hasOwnProperty('error')) {
-                throw new RemoteServiceError(resp)
-              }
-              return respObj.servers
-            })
-        })
+      const resp = await fetch(`${this.blockstackAPIUrl}/v1/zonefile/`, {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      const json = resp.json()
+      const respObj = await json
+      if (respObj.hasOwnProperty('error')) {
+        throw new RemoteServiceError(resp)
+      }
+      return respObj.servers
     }
   }
 
@@ -746,9 +685,10 @@ export class BlockstackNetwork {
    *   parameter
    * @private
    */
-  broadcastNameRegistration(preorderTransaction: string,
-                            registerTransaction: string,
-                            zoneFile: string) {
+  async broadcastNameRegistration(
+    preorderTransaction: string,
+    registerTransaction: string,
+    zoneFile: string) {
     /*
        * POST /v1/broadcast/registration
        * Request body:
@@ -760,18 +700,15 @@ export class BlockstackNetwork {
        */
 
     if (!preorderTransaction) {
-      const error = new MissingParameterError('preorderTransaction')
-      return Promise.reject(error)
+      throw new MissingParameterError('preorderTransaction')
     }
 
     if (!registerTransaction) {
-      const error = new MissingParameterError('registerTransaction')
-      return Promise.reject(error)
+      throw new MissingParameterError('registerTransaction')
     }
 
     if (!zoneFile) {
-      const error = new MissingParameterError('zoneFile')
-      return Promise.reject(error)
+      throw new MissingParameterError('zoneFile')
     }
 
     const requestBody = {
@@ -785,39 +722,32 @@ export class BlockstackNetwork {
     return this.broadcastServiceFetchHelper(endpoint, requestBody)
   }
 
-  getFeeRate(): Promise<number> {
-    return fetch('https://bitcoinfees.earn.com/api/v1/fees/recommended')
-      .then(resp => resp.json())
-      .then(rates => Math.floor(rates.fastestFee))
+  async getFeeRate(): Promise<number> {
+    const resp = await fetch('https://bitcoinfees.earn.com/api/v1/fees/recommended')
+    const rates = await resp.json()
+    return Math.floor(rates.fastestFee)
   }
 
   countDustOutputs() {
     throw new Error('Not implemented.')
   }
 
-  getUTXOs(address: string): Promise<UTXO[]> {
-    return this.getNetworkedUTXOs(address)
-      .then((networkedUTXOs) => {
-        let returnSet = networkedUTXOs.concat()
-        if (this.includeUtxoMap.hasOwnProperty(address)) {
-          returnSet = networkedUTXOs.concat(this.includeUtxoMap[address])
-        }
-
-        // aaron: I am *well* aware this is O(n)*O(m) runtime
-        //    however, clients should clear the exclude set periodically
-        const excludeSet = this.excludeUtxoSet
-        returnSet = returnSet.filter(
-          (utxo) => {
-            const inExcludeSet = excludeSet.reduce(
-              (inSet, utxoToCheck) => inSet || (utxoToCheck.tx_hash === utxo.tx_hash
-                          && utxoToCheck.tx_output_n === utxo.tx_output_n), false
-            )
-            return !inExcludeSet
-          }
-        )
-
-        return returnSet
-      })
+  async getUTXOs(address: string): Promise<UTXO[]> {
+    const networkedUTXOs = await this.getNetworkedUTXOs(address)
+    let returnSet = networkedUTXOs.concat()
+    if (this.includeUtxoMap.hasOwnProperty(address)) {
+      returnSet = networkedUTXOs.concat(this.includeUtxoMap[address])
+    }
+    // aaron: I am *well* aware this is O(n)*O(m) runtime
+    //    however, clients should clear the exclude set periodically
+    const excludeSet = this.excludeUtxoSet
+    returnSet = returnSet.filter((utxo) => {
+      const inExcludeSet = excludeSet.reduce((inSet, utxoToCheck) => inSet 
+        || (utxoToCheck.tx_hash === utxo.tx_hash
+        && utxoToCheck.tx_output_n === utxo.tx_output_n), false)
+      return !inExcludeSet
+    })
+    return returnSet
   }
 
   /**
@@ -881,21 +811,21 @@ export class BlockstackNetwork {
     this.excludeUtxoSet = []
   }
 
-  getConsensusHash() {
-    return fetch(`${this.blockstackAPIUrl}/v1/blockchains/bitcoin/consensus`)
-      .then(resp => resp.json())
-      .then(x => x.consensus_hash)
+  async getConsensusHash() {
+    const resp = await fetch(`${this.blockstackAPIUrl}/v1/blockchains/bitcoin/consensus`)
+    const x = await resp.json()
+    return x.consensus_hash
   }
 
-  getTransactionInfo(txHash: string): Promise<{block_height: number}> {
+  async getTransactionInfo(txHash: string): Promise<{block_height: number}> {
     return this.btc.getTransactionInfo(txHash)
   }
 
-  getBlockHeight() {
+  async getBlockHeight() {
     return this.btc.getBlockHeight()
   }
 
-  getNetworkedUTXOs(address: string): Promise<UTXO[]> {
+  async getNetworkedUTXOs(address: string): Promise<UTXO[]> {
     return this.btc.getNetworkedUTXOs(address)
   }
 }
@@ -906,7 +836,7 @@ export class LocalRegtest extends BlockstackNetwork {
     super(apiUrl, broadcastServiceUrl, bitcoinAPI, bitcoinjs.networks.testnet)
   }
 
-  getFeeRate(): Promise<number> {
+  async getFeeRate(): Promise<number> {
     return Promise.resolve(Math.floor(0.00001000 * SATOSHIS_PER_BTC))
   }
 }
@@ -925,83 +855,82 @@ export class BitcoindAPI extends BitcoinNetwork {
     this.importedBefore = {}
   }
 
-  broadcastTransaction(transaction: string) {
+  async broadcastTransaction(transaction: string) {
     const jsonRPC = {
       jsonrpc: '1.0',
       method: 'sendrawtransaction',
       params: [transaction]
     }
-    const authString =      Buffer.from(`${this.bitcoindCredentials.username}:${this.bitcoindCredentials.password}`)
+    const authString = Buffer
+      .from(`${this.bitcoindCredentials.username}:${this.bitcoindCredentials.password}`)
       .toString('base64')
     const headers = { Authorization: `Basic ${authString}` }
-    return fetch(this.bitcoindUrl, {
+    const resp = await fetch(this.bitcoindUrl, {
       method: 'POST',
       body: JSON.stringify(jsonRPC),
       headers
     })
-      .then(resp => resp.json())
-      .then(respObj => respObj.result)
+    const respObj = await resp.json()
+    return respObj.result
   }
 
-  getBlockHeight() {
+  async getBlockHeight() {
     const jsonRPC = {
       jsonrpc: '1.0',
       method: 'getblockcount'
     }
-    const authString =      Buffer.from(`${this.bitcoindCredentials.username}:${this.bitcoindCredentials.password}`)
+    const authString = Buffer
+      .from(`${this.bitcoindCredentials.username}:${this.bitcoindCredentials.password}`)
       .toString('base64')
     const headers = { Authorization: `Basic ${authString}` }
-    return fetch(this.bitcoindUrl, {
+    const resp = await fetch(this.bitcoindUrl, {
       method: 'POST',
       body: JSON.stringify(jsonRPC),
       headers
     })
-      .then(resp => resp.json())
-      .then(respObj => respObj.result)
+    const respObj = await resp.json()
+    return respObj.result
   }
 
-  getTransactionInfo(txHash: string): Promise<{block_height: number}> {
+  async getTransactionInfo(txHash: string): Promise<{block_height: number}> {
     const jsonRPC = {
       jsonrpc: '1.0',
       method: 'gettransaction',
       params: [txHash]
     }
-    const authString =      Buffer.from(`${this.bitcoindCredentials.username}:${this.bitcoindCredentials.password}`)
+    const authString = Buffer
+      .from(`${this.bitcoindCredentials.username}:${this.bitcoindCredentials.password}`)
       .toString('base64')
     const headers = { Authorization: `Basic ${authString}` }
-    return fetch(this.bitcoindUrl, {
+    const resp = await fetch(this.bitcoindUrl, {
       method: 'POST',
       body: JSON.stringify(jsonRPC),
       headers
     })
-      .then(resp => resp.json())
-      .then(respObj => respObj.result)
-      .then(txInfo => txInfo.blockhash)
-      .then((blockhash) => {
-        const jsonRPCBlock = {
-          jsonrpc: '1.0',
-          method: 'getblockheader',
-          params: [blockhash]
-        }
-        headers.Authorization = `Basic ${authString}`
-        return fetch(this.bitcoindUrl, {
-          method: 'POST',
-          body: JSON.stringify(jsonRPCBlock),
-          headers
-        })
-      })
-      .then(resp => resp.json())
-      .then((respObj) => {
-        if (!respObj || !respObj.result) {
-          // unconfirmed 
-          throw new Error('Unconfirmed transaction')
-        } else {
-          return { block_height: respObj.result.height }
-        }
-      })
+    const respObj = await resp.json()
+    const txInfo = respObj.result
+    const blockhash = txInfo.blockhash
+    const jsonRPCBlock = {
+      jsonrpc: '1.0',
+      method: 'getblockheader',
+      params: [blockhash]
+    }
+    headers.Authorization = `Basic ${authString}`
+    const resp_1 = await fetch(this.bitcoindUrl, {
+      method: 'POST',
+      body: JSON.stringify(jsonRPCBlock),
+      headers
+    })
+    const respObj_1 = await resp_1.json()
+    if (!respObj_1 || !respObj_1.result) {
+      // unconfirmed 
+      throw new Error('Unconfirmed transaction')
+    } else {
+      return { block_height: respObj_1.result.height }
+    }
   }
 
-  getNetworkedUTXOs(address: string): Promise<UTXO[]> {
+  async getNetworkedUTXOs(address: string): Promise<UTXO[]> {
     const jsonRPCImport = {
       jsonrpc: '1.0',
       method: 'importaddress',
@@ -1012,35 +941,33 @@ export class BitcoindAPI extends BitcoinNetwork {
       method: 'listunspent',
       params: [0, 9999999, [address]]
     }
-    const authString = Buffer.from(`${this.bitcoindCredentials.username}:${this.bitcoindCredentials.password}`)
+    const authString = Buffer
+      .from(`${this.bitcoindCredentials.username}:${this.bitcoindCredentials.password}`)
       .toString('base64')
     const headers = { Authorization: `Basic ${authString}` }
 
-    const importPromise = (this.importedBefore[address])
-      ? Promise.resolve()
-      : fetch(this.bitcoindUrl, {
+    if (!this.importedBefore[address]) {
+      await fetch(this.bitcoindUrl, {
         method: 'POST',
         body: JSON.stringify(jsonRPCImport),
         headers
       })
-        .then(() => { this.importedBefore[address] = true })
+      this.importedBefore[address] = true
+    }
 
-    return importPromise
-      .then(() => fetch(this.bitcoindUrl, {
-        method: 'POST',
-        body: JSON.stringify(jsonRPCUnspent),
-        headers
-      }))
-      .then(resp => resp.json())
-      .then(x => x.result)
-      .then(utxos => utxos.map(
-        (x: any) => ({
-          value: Math.round(x.amount * SATOSHIS_PER_BTC),
-          confirmations: x.confirmations,
-          tx_hash: x.txid,
-          tx_output_n: x.vout
-        })
-      ))
+    const resp = await fetch(this.bitcoindUrl, {
+      method: 'POST',
+      body: JSON.stringify(jsonRPCUnspent),
+      headers
+    })
+    const x = await resp.json()
+    const utxos = x.result
+    return utxos.map((x_1: any) => ({
+      value: Math.round(x_1.amount * SATOSHIS_PER_BTC),
+      confirmations: x_1.confirmations,
+      tx_hash: x_1.txid,
+      tx_output_n: x_1.vout
+    }))
   }
 }
 
@@ -1052,47 +979,42 @@ export class InsightClient extends BitcoinNetwork {
     this.apiUrl = insightUrl
   }
 
-  broadcastTransaction(transaction: string) {
+  async broadcastTransaction(transaction: string) {
     const jsonData = { rawtx: transaction }
-    return fetch(`${this.apiUrl}/tx/send`,
-                 {
-                   method: 'POST',
-                   headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify(jsonData)
-                 })
-      .then(resp => resp.json())
+    const resp = await fetch(`${this.apiUrl}/tx/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(jsonData)
+    })
+    return resp.json()
   }
 
-  getBlockHeight() {
-    return fetch(`${this.apiUrl}/status`)
-      .then(resp => resp.json())
-      .then(status => status.blocks)
+  async getBlockHeight() {
+    const resp = await fetch(`${this.apiUrl}/status`)
+    const status = await resp.json()
+    return status.blocks
   }
 
-  getTransactionInfo(txHash: string): Promise<{block_height: number}> {
-    return fetch(`${this.apiUrl}/tx/${txHash}`)
-      .then(resp => resp.json())
-      .then((transactionInfo) => {
-        if (transactionInfo.error) {
-          throw new Error(`Error finding transaction: ${transactionInfo.error}`)
-        }
-        return fetch(`${this.apiUrl}/block/${transactionInfo.blockHash}`)
-      })
-      .then(resp => resp.json())
-      .then(blockInfo => ({ block_height: blockInfo.height }))
+  async getTransactionInfo(txHash: string): Promise<{block_height: number}> {
+    const resp = await fetch(`${this.apiUrl}/tx/${txHash}`)
+    const transactionInfo = await resp.json()
+    if (transactionInfo.error) {
+      throw new Error(`Error finding transaction: ${transactionInfo.error}`)
+    }
+    const resp_1 = await fetch(`${this.apiUrl}/block/${transactionInfo.blockHash}`)
+    const blockInfo = await resp_1.json()
+    return ({ block_height: blockInfo.height })
   }
 
-  getNetworkedUTXOs(address: string): Promise<UTXO[]> {
-    return fetch(`${this.apiUrl}/addr/${address}/utxo`)
-      .then(resp => resp.json())
-      .then(utxos => utxos.map(
-        (x: any) => ({
-          value: x.satoshis,
-          confirmations: x.confirmations,
-          tx_hash: x.txid,
-          tx_output_n: x.vout
-        })
-      ))
+  async getNetworkedUTXOs(address: string): Promise<UTXO[]> {
+    const resp = await fetch(`${this.apiUrl}/addr/${address}/utxo`)
+    const utxos = await resp.json()
+    return utxos.map((x: any) => ({
+      value: x.satoshis,
+      confirmations: x.confirmations,
+      tx_hash: x.txid,
+      tx_output_n: x.vout
+    }))
   }
 }
 
@@ -1104,74 +1026,56 @@ export class BlockchainInfoApi extends BitcoinNetwork {
     this.utxoProviderUrl = blockchainInfoUrl
   }
 
-  getBlockHeight() {
-    return fetch(`${this.utxoProviderUrl}/latestblock?cors=true`)
-      .then(resp => resp.json())
-      .then(blockObj => blockObj.height)
+  async getBlockHeight() {
+    const resp = await fetch(`${this.utxoProviderUrl}/latestblock?cors=true`)
+    const blockObj = await resp.json()
+    return blockObj.height
   }
 
-  getNetworkedUTXOs(address: string): Promise<UTXO[]> {
-    return fetch(`${this.utxoProviderUrl}/unspent?format=json&active=${address}&cors=true`)
-      .then((resp) => {
-        if (resp.status === 500) {
-          Logger.debug('UTXO provider 500 usually means no UTXOs: returning []')
-          return {
-            unspent_outputs: []
-          }
-        } else {
-          return resp.json()
-        }
-      })
-      .then(utxoJSON => utxoJSON.unspent_outputs)
-      .then(utxoList => utxoList.map(
-        (utxo: any) => {
-          const utxoOut = {
-            value: utxo.value,
-            tx_output_n: utxo.tx_output_n,
-            confirmations: utxo.confirmations,
-            tx_hash: utxo.tx_hash_big_endian
-          }
-          return utxoOut
-        }
-      ))
+  async getNetworkedUTXOs(address: string): Promise<UTXO[]> {
+    const resp = await fetch(`${this.utxoProviderUrl}/unspent?format=json&active=${address}&cors=true`)
+    if (resp.status === 500) {
+      Logger.debug('UTXO provider 500 usually means no UTXOs: returning []')
+      return []
+    }
+    const utxoJSON = await resp.json()
+    const utxoList = utxoJSON.unspent_outputs
+    return utxoList.map((utxo: any) => {
+      const utxoOut: UTXO = {
+        value: utxo.value,
+        tx_output_n: utxo.tx_output_n,
+        confirmations: utxo.confirmations,
+        tx_hash: utxo.tx_hash_big_endian
+      }
+      return utxoOut
+    })
   }
 
-  getTransactionInfo(txHash: string): Promise<{block_height: number}> {
-    return fetch(`${this.utxoProviderUrl}/rawtx/${txHash}?cors=true`)
-      .then((resp) => {
-        if (resp.status === 200) {
-          return resp.json()
-        } else {
-          throw new Error(`Could not lookup transaction info for '${txHash}'. Server error.`)
-        }
-      })
-      .then(respObj => ({ block_height: respObj.block_height }))
+  async getTransactionInfo(txHash: string): Promise<{block_height: number}> {
+    const resp = await fetch(`${this.utxoProviderUrl}/rawtx/${txHash}?cors=true`)
+    if (resp.status !== 200) {
+      throw new Error(`Could not lookup transaction info for '${txHash}'. Server error.`)
+    }
+    const respObj = await resp.json()
+    return ({ block_height: respObj.block_height })
   }
 
-  broadcastTransaction(transaction: string) {
+  async broadcastTransaction(transaction: string) {
     const form = new FormData()
     form.append('tx', transaction)
-    return fetch(`${this.utxoProviderUrl}/pushtx?cors=true`,
-                 {
-                   method: 'POST',
-                   body: form as any
-                 })
-      .then((resp) => {
-        const text = resp.text()
-        return text
-          .then((respText) => {
-            if (respText.toLowerCase().indexOf('transaction submitted') >= 0) {
-              const txHash = Buffer.from(
-                bitcoinjs.Transaction.fromHex(transaction)
-                  .getHash()
-                  .reverse()).toString('hex') // big_endian
-              return txHash
-            } else {
-              throw new RemoteServiceError(resp,
-                                           `Broadcast transaction failed with message: ${respText}`)
-            }
-          })
-      })
+    const resp = await fetch(`${this.utxoProviderUrl}/pushtx?cors=true`, {
+      method: 'POST',
+      body: (form as any)
+    })
+    const respText = await resp.text()
+    if (respText.toLowerCase().indexOf('transaction submitted') >= 0) {
+      const txHash = Buffer.from(bitcoinjs.Transaction.fromHex(transaction)
+        .getHash()
+        .reverse()).toString('hex') // big_endian
+      return txHash
+    } else {
+      throw new RemoteServiceError(resp, `Broadcast transaction failed with message: ${respText}`)
+    }
   }
 }
 

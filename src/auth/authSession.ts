@@ -20,7 +20,7 @@ export function makeCoreSessionRequest(appDomain: string,
                                        appMethods: string[],
                                        appPrivateKey: string,
                                        blockchainID: string = null,
-                                       thisDevice: string = null) {
+                                       thisDevice: string = null): string {
   if (thisDevice === null) {
     thisDevice = '.default'
   }
@@ -63,42 +63,37 @@ export function makeCoreSessionRequest(appDomain: string,
  * @deprecated
  * @private
  */
-export function sendCoreSessionRequest(coreHost: string,
-                                       corePort: number,
-                                       coreAuthRequest: string,
-                                       apiPassword: string) {
-  return Promise.resolve().then(() => {
+export async function sendCoreSessionRequest(
+  coreHost: string,
+  corePort: number,
+  coreAuthRequest: string,
+  apiPassword: string
+): Promise<string> {
+  try {
     if (!apiPassword) {
       throw new Error('Missing API password')
     }
-  })
-    .then(() => {
-      const options = {
-        headers: {
-          Authorization: `bearer ${apiPassword}`
-        }
+    const options = {
+      headers: {
+        Authorization: `bearer ${apiPassword}`
       }
-      const url = `http://${coreHost}:${corePort}/v1/auth?authRequest=${coreAuthRequest}`
-      return fetch(url, options)
-    })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error('HTTP status not OK')
-      }
-      return response.text()
-    })
-    .then((responseText) => {
-      const responseJson = JSON.parse(responseText)
-      const token = responseJson.token
-      if (!token) {
-        throw new Error('Failed to get Core session token')
-      }
-      return token
-    })
-    .catch((error) => {
-      console.error(error)
-      throw new Error('Invalid Core response: not JSON')
-    })
+    }
+    const url = `http://${coreHost}:${corePort}/v1/auth?authRequest=${coreAuthRequest}`
+    const response = await fetch(url, options)
+    if (!response.ok) {
+      throw new Error('HTTP status not OK')
+    }
+    const responseText = await response.text()
+    const responseJson = JSON.parse(responseText)
+    const token = responseJson.token
+    if (!token) {
+      throw new Error('Failed to get Core session token')
+    }
+    return token
+  } catch (error) {
+    console.error(error)
+    throw new Error('Invalid Core response: not JSON')
+  }
 }
 
 
@@ -120,15 +115,17 @@ export function sendCoreSessionRequest(coreHost: string,
  * @deprecated
  * @private
  */
-export function getCoreSession(coreHost: string,
-                               corePort: number,
-                               apiPassword: string,
-                               appPrivateKey: string,
-                               blockchainId: string = null,
-                               authRequest: string = null,
-                               deviceId: string = '0') {
+export async function getCoreSession(
+  coreHost: string,
+  corePort: number,
+  apiPassword: string,
+  appPrivateKey: string,
+  blockchainId: string = null,
+  authRequest: string = null,
+  deviceId: string = '0'
+): Promise<string> {
   if (!authRequest) {
-    return Promise.reject('No authRequest provided')
+    throw new Error('No authRequest provided')
   }
 
   let payload = null
@@ -136,20 +133,20 @@ export function getCoreSession(coreHost: string,
   try {
     authRequestObject = decodeToken(authRequest)
     if (!authRequestObject) {
-      return Promise.reject('Invalid authRequest in URL query string')
+      throw new Error('Invalid authRequest in URL query string')
     }
     if (!authRequestObject.payload) {
-      return Promise.reject('Invalid authRequest in URL query string')
+      throw new Error('Invalid authRequest in URL query string')
     }
     payload = authRequestObject.payload
   } catch (e) {
     console.error(e.stack)
-    return Promise.reject('Failed to parse authRequest in URL')
+    throw new Error('Failed to parse authRequest in URL')
   }
 
   const appDomain = payload.domain_name
   if (!appDomain) {
-    return Promise.reject('No domain_name in authRequest')
+    throw new Error('No domain_name in authRequest')
   }
   const appMethods = payload.scopes
 

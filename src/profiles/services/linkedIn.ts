@@ -12,7 +12,7 @@ class LinkedIn extends Service {
     return baseUrls
   }
 
-  static getProofUrl(proof: any) {
+  static getProofUrl(proof: any): string {
     const baseUrls = this.getBaseUrls()
     
     let proofUrl = proof.proof_url.toLowerCase()

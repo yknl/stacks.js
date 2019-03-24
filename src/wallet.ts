@@ -89,19 +89,18 @@ export class BlockstackWallet {
    * @param {string} password - The plain password
    * @return {Promise<BlockstackWallet>} the constructed wallet
    */
-  static fromEncryptedMnemonic(data: string, password: string) {
-    return decryptMnemonic(data, password)
-      .then((mnemonic) => {
-        const seed = bip39.mnemonicToSeed(mnemonic)
-        return new BlockstackWallet(bip32.fromSeed(seed))
-      })
-      .catch((err) => {
-        if (err.message && err.message.startsWith('bad header;')) {
-          throw new Error('Incorrect password')
-        } else {
-          throw err
-        }
-      })
+  static async fromEncryptedMnemonic(data: string, password: string) {
+    try {
+      const mnemonic = await decryptMnemonic(data, password)
+      const seed = bip39.mnemonicToSeed(mnemonic)
+      return new BlockstackWallet(bip32.fromSeed(seed))
+    } catch (err) {
+      if (err.message && err.message.startsWith('bad header;')) {
+        throw new Error('Incorrect password')
+      } else {
+        throw err
+      }
+    }
   }
 
   /**
