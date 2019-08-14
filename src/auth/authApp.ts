@@ -188,11 +188,11 @@ export function signUserOut(redirectURL?: string, caller?: UserSession) {
   const userSession = caller || new UserSession()
   userSession.store.deleteSessionData()
   if (redirectURL) {
-    getGlobalObject(
-      'location', 
-      { throwIfUnavailable: true, usageDesc: 'signUserOut' }
-    ).href = redirectURL
-  } 
+    const location = getGlobalObject('location', { throwIfUnavailable: false })
+    if (location) {
+      location.href = redirectURL
+    }
+  }
 }
 
 /** 

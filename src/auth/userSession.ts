@@ -1,3 +1,4 @@
+import EventEmitter from 'events'
 import { AppConfig } from './appConfig'
 import { SessionOptions } from './sessionData'
 import {
@@ -15,7 +16,8 @@ import {
 } from '../utils'
 import {
   MissingParameterError,
-  InvalidStateError
+  InvalidStateError,
+  NoSessionDataError
 } from '../errors'
 import { Logger } from '../logger'
 import { GaiaHubConfig, connectToGaiaHub } from '../storage/hub'
@@ -33,13 +35,14 @@ import { BLOCKSTACK_DEFAULT_GAIA_HUB_URL, AuthScope } from './authConstants'
  * A user can be signed in either directly through the interactive
  * sign in process or by directly providing the app private key.
  * 
-
  * 
  */
 export class UserSession {
   appConfig: AppConfig
 
   store: SessionDataStore
+
+  eventEmitter: EventEmitter = new EventEmitter()
 
   /**
    * Creates a UserSession object
@@ -80,7 +83,43 @@ export class UserSession {
     }
   }
 
-  
+  private setupUserChangeListener() {
+    // Only setup callback on session store once.
+    if (!this.store.hasIdentityChangeCallback) {
+      this.store.setSessionIdentityChangeCallback(() => {
+        this.eventEmitter.emit('userChange')
+      })
+    }
+  }
+
+  /**
+   * Receive a notification for when a user is signed in, signed out, or 
+   * if a new user is signed in. 
+   * When notified the [[isUserSignedIn]] and [[loadUserData]] functions
+   * should be checked in order to perform any necessary app state changes. 
+   * @param listener The callback function. 
+   * @param once If true then the listener will only be triggered once. 
+   */
+  addUserChangeListener(listener: () => void, once = false) {
+    if (once) {
+      this.eventEmitter.once('userChange', listener)
+    } else {
+      this.eventEmitter.on('userChange', listener)
+    }
+    this.setupUserChangeListener()
+  }
+
+  /**
+   * Removes the specified listener from the listener array. 
+   */
+  removeUserChangeListener(listener: (...args: any[]) => void) {
+    this.eventEmitter.removeListener('userChange', listener)
+    if (this.eventEmitter.listenerCount('userChange') === 0) {
+      // Notify the session store that it no longer needs to watch
+      this.store.setSessionIdentityChangeCallback(undefined)
+    }
+  }
+
   /**
    * Generates an authentication request and redirects the user to the Blockstack
    * browser to approve the sign in request.
@@ -218,7 +257,14 @@ export class UserSession {
    * @returns {Boolean} `true` if the user is signed in, `false` if not.
    */
   isUserSignedIn() {
-    return !!this.store.getSessionData().userData
+    try {
+      return !!this.store.getSessionData().userData
+    } catch (error) {
+      if (error instanceof NoSessionDataError) {
+        return false
+      }
+      throw error
+    }
   }
 
   /**

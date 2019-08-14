@@ -2,6 +2,7 @@
 import test from 'tape-promise/tape'
 import { decodeToken, TokenSigner } from 'jsontokens'
 import FetchMock from 'fetch-mock'
+import * as jsdom from 'jsdom'
 
 import {
   makeECPrivateKey,
@@ -391,6 +392,112 @@ export function runAuthTests() {
       .catch((err) => {
         t.pass('Should throw error when overwriting existing user session during handle pending sign in')
       })
+  })
+
+  test('sign out event', async (t) => {
+
+    const url = `${nameLookupURL}ryan.id`
+
+    FetchMock.get(url, sampleNameRecords.ryan)
+
+    const appPrivateKey = makeECPrivateKey()
+    const transitPrivateKey = makeECPrivateKey()
+    const transitPublicKey = getPublicKeyFromPrivate(transitPrivateKey)
+    const metadata = {}
+
+    const authResponse = makeAuthResponse(privateKey, sampleProfiles.ryan, 'ryan.id',
+                                          metadata, undefined, appPrivateKey, undefined,
+                                          transitPublicKey)
+
+    const appConfig = new AppConfig(['store_write'], 'http://localhost:3000')
+    const userSession = new UserSession({ appConfig })
+    userSession.store.getSessionData().transitKey = transitPrivateKey
+
+    await userSession.handlePendingSignIn(authResponse)
+    t.pass('Should correctly sign in with auth response')
+
+    const isSignedIn = userSession.isUserSignedIn()
+    t.true(isSignedIn)
+
+    let didUserChange = false
+    let didUserSignOut = false
+    userSession.addUserChangeListener(() => {
+      didUserChange = true
+      didUserSignOut = !userSession.isUserSignedIn()
+    }, true)
+    userSession.signUserOut()
+    await new Promise<void>(resolve => setImmediate(() => resolve()))
+    t.true(didUserChange, 'Should have triggered user change event after sign out')
+    t.true(didUserSignOut, 'isUserSignedIn should be false after sign out event')
+  })
+
+  test('sign out event - localStorage', async (t) => {
+    const dom = new jsdom.JSDOM('', { 
+        url: 'https://localhost', 
+        pretendToBeVisual: true 
+    })
+    const window = dom.window
+
+    const globalAPIs: { [key: string]: any } = {
+      window: window,
+      self: window.self,
+      addEventListener: window.addEventListener,
+      removeEventListener: window.removeEventListener,
+      localStorage: window.localStorage
+    }
+
+    for (const key of Object.keys(globalAPIs)) {
+      (global as any)[key] = globalAPIs[key]
+    }
+
+    try {
+      const url = `${nameLookupURL}ryan.id`
+
+      FetchMock.get(url, sampleNameRecords.ryan)
+
+      const appPrivateKey = makeECPrivateKey()
+      const transitPrivateKey = makeECPrivateKey()
+      const transitPublicKey = getPublicKeyFromPrivate(transitPrivateKey)
+      const metadata = {}
+
+      const authResponse = makeAuthResponse(privateKey, sampleProfiles.ryan, 'ryan.id',
+                                            metadata, undefined, appPrivateKey, undefined,
+                                            transitPublicKey)
+
+      const appConfig = new AppConfig(['store_write'], 'http://localhost:3000')
+      const userSession = new UserSession({ appConfig })
+      const sessionData = userSession.store.getSessionData()
+      sessionData.transitKey = transitPrivateKey
+      userSession.store.setSessionData(sessionData)
+
+      await userSession.handlePendingSignIn(authResponse)
+      t.pass('Should correctly sign in with auth response')
+
+      const isSignedIn = userSession.isUserSignedIn()
+      t.true(isSignedIn)
+
+      let didUserChange = false
+      let didUserSignOut = false
+      userSession.addUserChangeListener(() => {
+        didUserChange = true
+        didUserSignOut = !userSession.isUserSignedIn()
+      }, true)
+      
+      // simulate clearing localStorage in another window
+      const iframe = dom.window.document.createElement('iframe');
+      iframe.id = 'iframe'
+      iframe.src = 'https://localhost'
+      dom.window.document.body.appendChild(iframe)
+      iframe.contentWindow.localStorage.clear()
+
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 100))
+      t.true(didUserChange, 'Should have triggered user change event after sign out')
+      t.true(didUserSignOut, 'isUserSignedIn should be false after sign out event')
+    } finally {
+      for (const key of Object.keys(globalAPIs)) {
+        delete (global as any)[key]
+      }
+    }
   })
 
   test('app config defaults app domain to origin', (t) => {
