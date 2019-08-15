@@ -23,6 +23,7 @@ import { Logger } from '../logger'
 import { GaiaHubConfig, connectToGaiaHub } from '../storage/hub'
 import { BLOCKSTACK_DEFAULT_GAIA_HUB_URL, AuthScope } from './authConstants'
 
+const USER_CHANGE_EVENT_NAME = 'userChange'
 
 /**
  * 
@@ -87,8 +88,19 @@ export class UserSession {
     // Only setup callback on session store once.
     if (!this.store.hasIdentityChangeCallback) {
       this.store.setSessionIdentityChangeCallback(() => {
-        setImmediate(() => this.eventEmitter.emit('userChange'))
+        setImmediate(() => {
+          this.eventEmitter.emit(USER_CHANGE_EVENT_NAME)
+          this.checkUserChangeListeners()
+        })
       })
+    }
+  }
+
+  private checkUserChangeListeners() {
+    // Checks if there are no more registered listeners.
+    if (this.eventEmitter.listenerCount(USER_CHANGE_EVENT_NAME) === 0) {
+      // Notify the session store that it no longer needs to watch.
+      this.store.setSessionIdentityChangeCallback(undefined)
     }
   }
 
@@ -105,9 +117,9 @@ export class UserSession {
    */
   addUserChangeListener(listener: () => void, once = false) {
     if (once) {
-      this.eventEmitter.once('userChange', listener)
+      this.eventEmitter.once(USER_CHANGE_EVENT_NAME, listener)
     } else {
-      this.eventEmitter.on('userChange', listener)
+      this.eventEmitter.on(USER_CHANGE_EVENT_NAME, listener)
     }
     this.setupUserChangeListener()
   }
@@ -116,11 +128,8 @@ export class UserSession {
    * Removes the specified listener from the listener array. 
    */
   removeUserChangeListener(listener: (...args: any[]) => void) {
-    this.eventEmitter.removeListener('userChange', listener)
-    if (this.eventEmitter.listenerCount('userChange') === 0) {
-      // Notify the session store that it no longer needs to watch
-      this.store.setSessionIdentityChangeCallback(undefined)
-    }
+    this.eventEmitter.removeListener(USER_CHANGE_EVENT_NAME, listener)
+    this.checkUserChangeListeners()
   }
 
   /**

@@ -26,8 +26,9 @@ import {
 } from '../../../src'
 
 import { sampleProfiles, sampleNameRecords } from './sampleData'
-import { LocalStorageStore } from '../../../src/auth/sessionStore';
+import { LocalStorageStore, InstanceDataStore } from '../../../src/auth/sessionStore';
 import { SessionData } from '../../../src/auth/sessionData';
+import { UserData } from '../../../src/auth/authApp';
 
 // global.window = {}
 
@@ -35,6 +36,8 @@ export function runAuthTests() {
   const privateKey = 'a5c61c6ca7b3e7e55edee68566aeab22e4da26baa285c7bd10e8d2218aa3b229'
   const publicKey = '027d28f9951ce46538951e3697c62588a87f1f1f295de4a14fdd4c780fc52cfe69'
   const nameLookupURL = 'https://core.blockstack.org/v1/names/'
+
+  const privateKey2 = '1d27752d9aa6ced3d7d3c8b196d3d7c60ac58ac04af468a349a91959c8955d3e'
 
   test('makeAuthRequest && verifyAuthRequest', (t) => {
     t.plan(15)
@@ -394,6 +397,63 @@ export function runAuthTests() {
       .catch((err) => {
         t.pass('Should throw error when overwriting existing user session during handle pending sign in')
       })
+  })
+
+  test('sign in with different user event', async (t) => {
+    FetchMock.get(`${nameLookupURL}ryan.id`, sampleNameRecords.ryan)
+    FetchMock.get(`${nameLookupURL}larry.id`, sampleNameRecords.larry)
+
+    const appPrivateKey1 = makeECPrivateKey()
+    const transitPrivateKey1 = makeECPrivateKey()
+    const transitPublicKey1 = getPublicKeyFromPrivate(transitPrivateKey1)
+    const metadata = {}
+
+    const appConfig = new AppConfig(['store_write'], 'http://localhost:3000')
+    const userSession = new UserSession({ appConfig })
+    userSession.store.getSessionData().transitKey = transitPrivateKey1
+
+    const authResponse = makeAuthResponse(privateKey, sampleProfiles.ryan, 'ryan.id',
+                                          metadata, undefined, appPrivateKey1, undefined,
+                                          transitPublicKey1)
+
+    let didUserSignIn = false
+    userSession.addUserChangeListener(() => {
+      didUserSignIn = userSession.isUserSignedIn()
+    }, true)
+    await userSession.handlePendingSignIn(authResponse)
+    await new Promise<void>(resolve => setTimeout(() => resolve(), 100))
+    t.true(didUserSignIn, 'User should be signed in after change event')
+
+    // Cache the user data like an app might do
+    const appCachedUserData = { ...userSession.loadUserData() }
+
+    // Simulate current user being signed out and another user signed in, 
+    // for example in another Window... 
+    const sessionData = (userSession.store as InstanceDataStore).getSessionData()
+    sessionData.userData = undefined
+    const appPrivateKey2 = makeECPrivateKey()
+    const transitPrivateKey2 = makeECPrivateKey()
+    const transitPublicKey2 = getPublicKeyFromPrivate(transitPrivateKey2)
+    sessionData.transitKey = transitPrivateKey2
+    const authResponse2 = makeAuthResponse(privateKey2, sampleProfiles.larry, 'larry.id',
+                                           {}, undefined, appPrivateKey2, undefined,
+                                           transitPublicKey2)
+    let didUserChangeEvent = false
+    let didUser2SignIn = false
+    let newUserData: UserData
+    userSession.addUserChangeListener(() => {
+      didUserChangeEvent = true
+      didUser2SignIn = userSession.isUserSignedIn()
+      newUserData = { ...userSession.loadUserData() }
+    }, true)
+    await userSession.handlePendingSignIn(authResponse2)
+    await new Promise<void>(resolve => setTimeout(() => resolve(), 100))
+
+    t.true(didUserChangeEvent, 'User change event should have triggered with different user sign in')
+    t.true(didUser2SignIn, 'A user should still be signed in after different user sign in change event')
+    
+    t.equal(appCachedUserData.username, 'ryan.id', 'Should have previous username in old cached user data')
+    t.equal(newUserData.username, 'larry.id', 'Should have new username in updated user data')
   })
 
   test('sign out event', async (t) => {

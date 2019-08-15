@@ -21,7 +21,8 @@ export const sampleManifests = {
 }
 
 export const sampleNameRecords = {
-  ryan: JSON.parse(fs.readFileSync(`${TEST_DATA_DIR}/name-records/ryan.json`, 'utf8'))
+  ryan: JSON.parse(fs.readFileSync(`${TEST_DATA_DIR}/name-records/ryan.json`, 'utf8')),
+  larry: JSON.parse(fs.readFileSync(`${TEST_DATA_DIR}/name-records/larry.json`, 'utf8'))
 }
 
 export const sampleProfiles = {
