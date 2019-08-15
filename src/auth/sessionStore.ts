@@ -81,7 +81,7 @@ export class InstanceDataStore extends SessionDataStore {
     if (session && session.userData && session.userData.identityAddress) {
       currentIdentity = session.userData.identityAddress
     }
-    if (this.identityChangeCallback && this.lastUpdatedIdentity !== currentIdentity) {
+    if (this.hasIdentityChangeCallback && this.lastUpdatedIdentity !== currentIdentity) {
       this.identityChangeCallback({
         oldIdentity: this.lastUpdatedIdentity, 
         newIdentity: currentIdentity
@@ -106,7 +106,7 @@ export class InstanceDataStore extends SessionDataStore {
  * @ignore
  */
 export class LocalStorageStore extends SessionDataStore {
-  private readonly key: string
+  readonly key: string
 
   // sessionStorageEventCallback: (ev: StorageEvent) => void
 
@@ -150,6 +150,14 @@ export class LocalStorageStore extends SessionDataStore {
     if (session && session.userData && session.userData.identityAddress) {
       currentIdentity = session.userData.identityAddress
     }
+
+    if (this.hasIdentityChangeCallback && this.lastUpdatedIdentity !== currentIdentity) {
+      this.identityChangeCallback({
+        oldIdentity: this.lastUpdatedIdentity, 
+        newIdentity: currentIdentity
+      })
+    }
+
     this.lastUpdatedIdentity = currentIdentity
     
     localStorage.setItem(this.key, session.toString())
@@ -163,7 +171,7 @@ export class LocalStorageStore extends SessionDataStore {
   }
 
   private sessionStorageEvent = (ev: StorageEvent) => {
-    if (!this.identityChangeCallback) {
+    if (!this.hasIdentityChangeCallback) {
       return
     }
     let currentSessionDataString: string | undefined
@@ -194,7 +202,7 @@ export class LocalStorageStore extends SessionDataStore {
 
   setSessionIdentityChangeCallback(callback?: SessionIdentityChangeCallback): void {
     // If previously already set, remove listener to avoid multiple invocations.
-    if (this.identityChangeCallback) {
+    if (this.hasIdentityChangeCallback) {
       removeEventListener('storage', this.sessionStorageEvent)
     }
     this.identityChangeCallback = callback

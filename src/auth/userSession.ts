@@ -87,16 +87,19 @@ export class UserSession {
     // Only setup callback on session store once.
     if (!this.store.hasIdentityChangeCallback) {
       this.store.setSessionIdentityChangeCallback(() => {
-        this.eventEmitter.emit('userChange')
+        setImmediate(() => this.eventEmitter.emit('userChange'))
       })
     }
   }
 
   /**
    * Receive a notification for when a user is signed in, signed out, or 
-   * if a new user is signed in. 
+   * if a different user is signed in. 
    * When notified the [[isUserSignedIn]] and [[loadUserData]] functions
    * should be checked in order to perform any necessary app state changes. 
+   * For example, a previously signed in user may be signed out from an 
+   * action performed in another browser Window. Or a user could
+   * be signed in with a different identity than the previous. 
    * @param listener The callback function. 
    * @param once If true then the listener will only be triggered once. 
    */

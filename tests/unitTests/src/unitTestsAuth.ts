@@ -26,6 +26,8 @@ import {
 } from '../../../src'
 
 import { sampleProfiles, sampleNameRecords } from './sampleData'
+import { LocalStorageStore } from '../../../src/auth/sessionStore';
+import { SessionData } from '../../../src/auth/sessionData';
 
 // global.window = {}
 
@@ -431,7 +433,71 @@ export function runAuthTests() {
     t.true(didUserSignOut, 'isUserSignedIn should be false after sign out event')
   })
 
-  test('sign out event - localStorage', async (t) => {
+  test('sign out event - localStorage - same Window signOut on', async (t) => {
+    const dom = new jsdom.JSDOM('', { 
+        url: 'https://localhost', 
+        pretendToBeVisual: true 
+    })
+    const window = dom.window
+
+    const globalAPIs: { [key: string]: any } = {
+      window: window,
+      self: window.self,
+      addEventListener: window.addEventListener,
+      removeEventListener: window.removeEventListener,
+      localStorage: window.localStorage
+    }
+
+    for (const key of Object.keys(globalAPIs)) {
+      (global as any)[key] = globalAPIs[key]
+    }
+
+    try {
+      const url = `${nameLookupURL}ryan.id`
+
+      FetchMock.get(url, sampleNameRecords.ryan)
+
+      const appPrivateKey = makeECPrivateKey()
+      const transitPrivateKey = makeECPrivateKey()
+      const transitPublicKey = getPublicKeyFromPrivate(transitPrivateKey)
+      const metadata = {}
+
+      const authResponse = makeAuthResponse(privateKey, sampleProfiles.ryan, 'ryan.id',
+                                            metadata, undefined, appPrivateKey, undefined,
+                                            transitPublicKey)
+
+      const appConfig = new AppConfig(['store_write'], 'http://localhost:3000')
+      const userSession = new UserSession({ appConfig })
+      const sessionData = userSession.store.getSessionData()
+      sessionData.transitKey = transitPrivateKey
+      userSession.store.setSessionData(sessionData)
+
+      await userSession.handlePendingSignIn(authResponse)
+      t.pass('Should correctly sign in with auth response')
+
+      const isSignedIn = userSession.isUserSignedIn()
+      t.true(isSignedIn)
+
+      let didUserChange = false
+      let didUserSignOut = false
+      userSession.addUserChangeListener(() => {
+        didUserChange = true
+        didUserSignOut = !userSession.isUserSignedIn()
+      }, true)
+      
+      userSession.signUserOut()
+
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 100))
+      t.true(didUserChange, 'Should have triggered user change event after sign out')
+      t.true(didUserSignOut, 'isUserSignedIn should be false after sign out event')
+    } finally {
+      for (const key of Object.keys(globalAPIs)) {
+        delete (global as any)[key]
+      }
+    }
+  })
+
+  test('sign out event - localStorage - different Window storage cleared', async (t) => {
     const dom = new jsdom.JSDOM('', { 
         url: 'https://localhost', 
         pretendToBeVisual: true 
@@ -489,6 +555,76 @@ export function runAuthTests() {
       iframe.src = 'https://localhost'
       dom.window.document.body.appendChild(iframe)
       iframe.contentWindow.localStorage.clear()
+
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 100))
+      t.true(didUserChange, 'Should have triggered user change event after sign out')
+      t.true(didUserSignOut, 'isUserSignedIn should be false after sign out event')
+    } finally {
+      for (const key of Object.keys(globalAPIs)) {
+        delete (global as any)[key]
+      }
+    }
+  })
+
+  test('sign out event - localStorage - different Window signOut', async (t) => {
+    const dom = new jsdom.JSDOM('', { 
+        url: 'https://localhost', 
+        pretendToBeVisual: true 
+    })
+    const window = dom.window
+
+    const globalAPIs: { [key: string]: any } = {
+      window: window,
+      self: window.self,
+      addEventListener: window.addEventListener,
+      removeEventListener: window.removeEventListener,
+      localStorage: window.localStorage
+    }
+
+    for (const key of Object.keys(globalAPIs)) {
+      (global as any)[key] = globalAPIs[key]
+    }
+
+    try {
+      const url = `${nameLookupURL}ryan.id`
+
+      FetchMock.get(url, sampleNameRecords.ryan)
+
+      const appPrivateKey = makeECPrivateKey()
+      const transitPrivateKey = makeECPrivateKey()
+      const transitPublicKey = getPublicKeyFromPrivate(transitPrivateKey)
+      const metadata = {}
+
+      const authResponse = makeAuthResponse(privateKey, sampleProfiles.ryan, 'ryan.id',
+                                            metadata, undefined, appPrivateKey, undefined,
+                                            transitPublicKey)
+
+      const appConfig = new AppConfig(['store_write'], 'http://localhost:3000')
+      const userSession = new UserSession({ appConfig })
+      const sessionData = userSession.store.getSessionData()
+      sessionData.transitKey = transitPrivateKey
+      userSession.store.setSessionData(sessionData)
+
+      await userSession.handlePendingSignIn(authResponse)
+      t.pass('Should correctly sign in with auth response')
+
+      const isSignedIn = userSession.isUserSignedIn()
+      t.true(isSignedIn)
+
+      let didUserChange = false
+      let didUserSignOut = false
+      userSession.addUserChangeListener(() => {
+        didUserChange = true
+        didUserSignOut = !userSession.isUserSignedIn()
+      }, true)
+      
+      // simulate clearing localStorage in another window
+      const iframe = dom.window.document.createElement('iframe');
+      iframe.id = 'iframe'
+      iframe.src = 'https://localhost'
+      dom.window.document.body.appendChild(iframe)
+      const localStorageKey = (userSession.store as LocalStorageStore).key
+      iframe.contentWindow.localStorage.setItem(localStorageKey, new SessionData({}).toString())
 
       await new Promise<void>(resolve => setTimeout(() => resolve(), 100))
       t.true(didUserChange, 'Should have triggered user change event after sign out')
