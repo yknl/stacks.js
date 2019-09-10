@@ -53,6 +53,8 @@ export function protocolEchoReplyDetection(): boolean {
 
     // Set the echo-reply result in localStorage for the other window to see.
     globalScope.localStorage.setItem(echoReplyKey, 'success')
+    // Browsers can sometimes not flush localStorage writes to disk, get after set can help. 
+    globalScope.localStorage.getItem(echoReplyKey)
 
     // Redirect back to the localhost auth url, as opposed to another protocol launch.
     // This will re-use the same tab rather than creating another useless one.

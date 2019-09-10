@@ -34,6 +34,9 @@ export function launchCustomProtocol(
   // Create the storage entry to signal a protocol detection attempt for the
   // next browser window to check.
   localStorage.setItem(echoReplyKey, Date.now().toString())
+  // Browsers can sometimes not flush localStorage writes to disk, get after set can help. 
+  localStorage.getItem(echoReplyKey)
+  
   const cleanUpLocalStorage = () => {
     try {
       localStorage.removeItem(echoReplyKey)

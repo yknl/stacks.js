@@ -103,6 +103,8 @@ export class LocalStorageStore extends SessionDataStore {
 
   setSessionData(session: SessionData): boolean {
     localStorage.setItem(this.key, session.toString())
+    // Browsers can sometimes not flush localStorage writes to disk, get after set can help. 
+    localStorage.getItem(this.key)
     return true
   }
 
