@@ -217,6 +217,17 @@ export function redirectToSignInWithAuthRequest(
   authRequest = authRequest || makeAuthRequest()
   const httpsURI = `${blockstackIDHost}?authRequest=${authRequest}`
 
+  // const { window } = getGlobalObject('window', )
+
+  if (typeof window !== 'undefined') {
+    const _window: any = window
+
+    if (_window.BlockstackApp) {
+      _window.BlockstackApp.auth(authRequest)
+      return
+    }
+  }
+
   const { navigator, location } = getGlobalObjects(
     ['navigator', 'location'],
     { throwIfUnavailable: true, usageDesc: 'redirectToSignInWithAuthRequest' }
