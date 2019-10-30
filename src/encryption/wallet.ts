@@ -8,7 +8,7 @@ import * as triplesec from 'triplesec'
  * @param {string} password - Password to encrypt mnemonic with
  * @return {Promise<Buffer>} The encrypted phrase
  * @private
- * @ignore 
+ * @ignore
  * */
 export function encryptMnemonic(phrase: string, password: string) {
   return Promise.resolve().then(() => {
@@ -19,7 +19,8 @@ export function encryptMnemonic(phrase: string, password: string) {
 
     // normalize plaintext to fixed length byte string
     const plaintextNormalized = Buffer.from(
-      bip39.mnemonicToEntropy(phrase), 'hex'
+      bip39.mnemonicToEntropy(phrase),
+      'hex'
     )
 
     // AES-128-CBC with SHA256 HMAC
@@ -39,21 +40,25 @@ export function encryptMnemonic(phrase: string, password: string) {
     hmac.write(hmacPayload)
     const hmacDigest = hmac.digest()
 
-    const payload = Buffer.concat([salt, hmacDigest, Buffer.from(cipherText, 'hex')])
+    const payload = Buffer.concat([
+      salt,
+      hmacDigest,
+      Buffer.from(cipherText, 'hex')
+    ])
     return payload
   })
 }
 
 // Used to distinguish bad password during decrypt vs invalid format
-class PasswordError extends Error { }
+class PasswordError extends Error {}
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 function decryptMnemonicBuffer(dataBuffer: Buffer, password: string) {
   return Promise.resolve().then(() => {
     const salt = dataBuffer.slice(0, 16)
-    const hmacSig = dataBuffer.slice(16, 48)   // 32 bytes
+    const hmacSig = dataBuffer.slice(16, 48) // 32 bytes
     const cipherText = dataBuffer.slice(48)
     const hmacPayload = Buffer.concat([salt, cipherText])
 
@@ -72,12 +77,14 @@ function decryptMnemonicBuffer(dataBuffer: Buffer, password: string) {
 
     // hash both hmacSig and hmacDigest so string comparison time
     // is uncorrelated to the ciphertext
-    const hmacSigHash = crypto.createHash('sha256')
+    const hmacSigHash = crypto
+      .createHash('sha256')
       .update(hmacSig)
       .digest()
       .toString('hex')
 
-    const hmacDigestHash = crypto.createHash('sha256')
+    const hmacDigestHash = crypto
+      .createHash('sha256')
       .update(hmacDigest)
       .digest()
       .toString('hex')
@@ -96,14 +103,13 @@ function decryptMnemonicBuffer(dataBuffer: Buffer, password: string) {
   })
 }
 
-
 /**
  * Decrypt legacy triplesec keys
  * @param {Buffer} dataBuffer - The encrypted key
  * @param {String} password - Password for data
  * @return {Promise<Buffer>} Decrypted seed
  * @private
- * @ignore 
+ * @ignore
  */
 function decryptLegacy(dataBuffer: Buffer, password: string) {
   return new Promise<Buffer>((resolve, reject) => {
@@ -129,11 +135,14 @@ function decryptLegacy(dataBuffer: Buffer, password: string) {
  * @param {string} password - Password for data
  * @return {Promise<string>} the raw mnemonic phrase
  * @private
- * @ignore 
+ * @ignore
  */
-export function decryptMnemonic(data: (string | Buffer), password: string): Promise<string> {
+export function decryptMnemonic(
+  data: string | Buffer,
+  password: string
+): Promise<string> {
   const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data, 'hex')
-  return decryptMnemonicBuffer(dataBuffer, password).catch((err) => {
+  return decryptMnemonicBuffer(dataBuffer, password).catch(err => {
     // If it was a password error, don't even bother with legacy
     if (err instanceof PasswordError) {
       throw err

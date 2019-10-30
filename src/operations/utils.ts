@@ -1,6 +1,9 @@
-
-
-import { TransactionBuilder, Transaction, TxOutput, crypto as bjsCrypto } from 'bitcoinjs-lib'
+import {
+  TransactionBuilder,
+  Transaction,
+  TxOutput,
+  crypto as bjsCrypto
+} from 'bitcoinjs-lib'
 import * as RIPEMD160 from 'ripemd160'
 // @ts-ignore
 import * as BN from 'bn.js'
@@ -8,30 +11,28 @@ import { NotEnoughFundsError } from '../errors'
 import { TransactionSigner } from './signers'
 import { UTXO } from '../network'
 
-
 /**
- * 
+ *
  * @ignore
  */
 export const DUST_MINIMUM = 5500
 
 /**
- * 
+ *
  * @ignore
  */
 export function hash160(buff: Buffer) {
   const sha256 = bjsCrypto.sha256(buff)
-  return (new RIPEMD160()).update(sha256).digest()
+  return new RIPEMD160().update(sha256).digest()
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function hash128(buff: Buffer) {
   return Buffer.from(bjsCrypto.sha256(buff).slice(0, 16))
 }
-
 
 // COPIED FROM coinselect, because 1 byte matters sometimes.
 // baseline estimates, used to improve performance
@@ -61,18 +62,23 @@ function outputBytes(output: txPoint | null) {
   }
 }
 
-function transactionBytes(inputs: Array<txPoint | null>, outputs: Array<txPoint | null>) {
-  return TX_EMPTY_SIZE
-    + inputs.reduce((a: number, x: txPoint | null) => (a + inputBytes(x)), 0)
-    + outputs.reduce((a: number, x: txPoint | null) => (a + outputBytes(x)), 0)
+function transactionBytes(
+  inputs: Array<txPoint | null>,
+  outputs: Array<txPoint | null>
+) {
+  return (
+    TX_EMPTY_SIZE +
+    inputs.reduce((a: number, x: txPoint | null) => a + inputBytes(x), 0) +
+    outputs.reduce((a: number, x: txPoint | null) => a + outputBytes(x), 0)
+  )
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function getTransactionInsideBuilder(txBuilder: TransactionBuilder) {
-  return ((txBuilder as any).__TX as Transaction)
+  return (txBuilder as any).__TX as Transaction
 }
 
 function getTransaction(txIn: Transaction | TransactionBuilder) {
@@ -85,12 +91,14 @@ function getTransaction(txIn: Transaction | TransactionBuilder) {
 //
 
 /**
- * 
+ *
  * @ignore
  */
-export function estimateTXBytes(txIn: Transaction | TransactionBuilder,
-                                additionalInputs: number,
-                                additionalOutputs: number) {
+export function estimateTXBytes(
+  txIn: Transaction | TransactionBuilder,
+  additionalInputs: number,
+  additionalOutputs: number
+) {
   const innerTx = getTransaction(txIn)
   const dummyInputs: Array<null> = new Array(additionalInputs)
   dummyInputs.fill(null)
@@ -104,7 +112,7 @@ export function estimateTXBytes(txIn: Transaction | TransactionBuilder,
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function sumOutputValues(txIn: Transaction | TransactionBuilder) {
@@ -113,7 +121,7 @@ export function sumOutputValues(txIn: Transaction | TransactionBuilder) {
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function decodeB40(input: string) {
@@ -131,14 +139,10 @@ export function decodeB40(input: string) {
   const characters = '0123456789abcdefghijklmnopqrstuvwxyz-_.+'
   const base = new BN(40)
   const inputDigits = input.split('').reverse()
-  const digitValues = inputDigits.map(
-    ((character: string, exponent: number) => new BN(characters.indexOf(character))
-      .mul(base.pow(new BN(exponent))))
+  const digitValues = inputDigits.map((character: string, exponent: number) =>
+    new BN(characters.indexOf(character)).mul(base.pow(new BN(exponent)))
   )
-  const sum = digitValues.reduce(
-    (agg: BN, cur: BN) => agg.add(cur),
-    new BN(0)
-  )
+  const sum = digitValues.reduce((agg: BN, cur: BN) => agg.add(cur), new BN(0))
   return sum.toString(16, 2)
 }
 
@@ -160,17 +164,21 @@ export function decodeB40(input: string) {
  * @private
  * @ignore
  */
-export function addUTXOsToFund(txBuilderIn: TransactionBuilder,
-                               utxos: Array<UTXO>,
-                               amountToFund: number, feeRate: number,
-                               fundNewFees: boolean = true): number {
+export function addUTXOsToFund(
+  txBuilderIn: TransactionBuilder,
+  utxos: Array<UTXO>,
+  amountToFund: number,
+  feeRate: number,
+  fundNewFees: boolean = true
+): number {
   if (utxos.length === 0) {
     throw new NotEnoughFundsError(amountToFund)
   }
 
   // how much are we increasing fees by adding an input ?
-  const newFees = feeRate * (estimateTXBytes(txBuilderIn, 1, 0)
-                             - estimateTXBytes(txBuilderIn, 0, 0))
+  const newFees =
+    feeRate *
+    (estimateTXBytes(txBuilderIn, 1, 0) - estimateTXBytes(txBuilderIn, 0, 0))
   let utxoThreshhold = amountToFund
   if (fundNewFees) {
     utxoThreshhold += newFees
@@ -202,26 +210,32 @@ export function addUTXOsToFund(txBuilderIn: TransactionBuilder,
       remainToFund += newFees
     }
 
-    return addUTXOsToFund(txBuilderIn, utxos.slice(1),
-                          remainToFund, feeRate, fundNewFees)
+    return addUTXOsToFund(
+      txBuilderIn,
+      utxos.slice(1),
+      remainToFund,
+      feeRate,
+      fundNewFees
+    )
   }
 }
 
-
-export function signInputs(txB: TransactionBuilder,
-                           defaultSigner: TransactionSigner,
-                           otherSigners?: Array<{index: number, signer: TransactionSigner}>) {
+export function signInputs(
+  txB: TransactionBuilder,
+  defaultSigner: TransactionSigner,
+  otherSigners?: Array<{ index: number; signer: TransactionSigner }>
+) {
   const txInner = getTransactionInsideBuilder(txB)
   const signerArray = txInner.ins.map(() => defaultSigner)
   if (otherSigners) {
-    otherSigners.forEach((signerPair) => {
+    otherSigners.forEach(signerPair => {
       signerArray[signerPair.index] = signerPair.signer
     })
   }
   let signingPromise = Promise.resolve()
   for (let i = 0; i < txInner.ins.length; i++) {
-    signingPromise = signingPromise.then(
-      () => signerArray[i].signTransaction(txB, i)
+    signingPromise = signingPromise.then(() =>
+      signerArray[i].signTransaction(txB, i)
     )
   }
   return signingPromise.then(() => txB)

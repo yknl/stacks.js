@@ -1,4 +1,3 @@
-
 import { TransactionBuilder, ECPair } from 'bitcoinjs-lib'
 import { hexStringToECPair, ecPairToAddress } from '../utils'
 
@@ -11,14 +10,14 @@ export interface TransactionSigner {
    * @private
    * @ignore
    */
-  signerVersion(): number;
+  signerVersion(): number
   /**
    * @returns a string representing the transaction signer's address
    * (usually Base58 check encoding)
    * @private
    * @ignore
    */
-  getAddress(): Promise<string>;
+  getAddress(): Promise<string>
   /**
    * Signs a transaction input
    * @param {TransactionBuilder} transaction - the transaction to sign
@@ -26,7 +25,10 @@ export interface TransactionSigner {
    * @private
    * @ignore
    */
-  signTransaction(transaction: TransactionBuilder, inputIndex: number): Promise<void>;
+  signTransaction(
+    transaction: TransactionBuilder,
+    inputIndex: number
+  ): Promise<void>
 }
 
 /**
@@ -51,14 +53,15 @@ export class PubkeyHashSigner implements TransactionSigner {
   }
 
   getAddress(): Promise<string> {
-    return Promise.resolve()
-      .then(() => ecPairToAddress(this.ecPair))
+    return Promise.resolve().then(() => ecPairToAddress(this.ecPair))
   }
 
-  signTransaction(transaction: TransactionBuilder, inputIndex: number): Promise<void> {
-    return Promise.resolve()
-      .then(() => {
-        transaction.sign(inputIndex, this.ecPair)
-      })
+  signTransaction(
+    transaction: TransactionBuilder,
+    inputIndex: number
+  ): Promise<void> {
+    return Promise.resolve().then(() => {
+      transaction.sign(inputIndex, this.ecPair)
+    })
   }
 }

@@ -1,9 +1,12 @@
-
 import { Service } from './service'
 
 class Github extends Service {
   static getBaseUrls() {
-    const baseUrls = ['https://gist.github.com/', 'http://gist.github.com', 'gist.github.com']
+    const baseUrls = [
+      'https://gist.github.com/',
+      'http://gist.github.com',
+      'gist.github.com'
+    ]
     return baseUrls
   }
 
@@ -24,7 +27,9 @@ class Github extends Service {
         return `${proofUrl}${raw}`
       }
     }
-    throw new Error(`Proof url ${proof.proof_url} is not valid for service ${proof.service}`)
+    throw new Error(
+      `Proof url ${proof.proof_url} is not valid for service ${proof.service}`
+    )
   }
 }
 

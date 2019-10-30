@@ -1,23 +1,23 @@
-
-
-import { TransactionBuilder, payments, address as bjsAddress } from 'bitcoinjs-lib'
+import {
+  TransactionBuilder,
+  payments,
+  address as bjsAddress
+} from 'bitcoinjs-lib'
 // @ts-ignore
 import * as BN from 'bn.js'
-import {
-  decodeB40, hash160, hash128, DUST_MINIMUM
-} from './utils'
+import { decodeB40, hash160, hash128, DUST_MINIMUM } from './utils'
 import { config } from '../config'
 
 // support v1 and v2 price API endpoint return values
 type AmountTypeV1 = number
-type AmountTypeV2 = { units: string, amount: BN }
+type AmountTypeV2 = { units: string; amount: BN }
 type AmountType = AmountTypeV1 | AmountTypeV2
 
 // todo : add name length / character verification
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class BlockstackNamespace {
   namespaceID: string
 
@@ -40,7 +40,9 @@ export class BlockstackNamespace {
       throw new Error('Namespace ID too long (19 chars max)')
     }
     if (!namespaceID.match('[0123456789abcdefghijklmnopqrstuvwxyz_-]+')) {
-      throw new Error('Namespace ID can only use characters 0123456789abcdefghijklmnopqrstuvwxyz-_')
+      throw new Error(
+        'Namespace ID can only use characters 0123456789abcdefghijklmnopqrstuvwxyz-_'
+      )
     }
 
     this.namespaceID = namespaceID
@@ -112,14 +114,18 @@ export class BlockstackNamespace {
 
   setNonalphaDiscount(nonalphaDiscount: number) {
     if (nonalphaDiscount <= 0 || nonalphaDiscount > 15) {
-      throw new Error('Invalid nonalphaDiscount: must be a positive 4-bit number')
+      throw new Error(
+        'Invalid nonalphaDiscount: must be a positive 4-bit number'
+      )
     }
     this.nonalphaDiscount = nonalphaDiscount
   }
 
   setNoVowelDiscount(noVowelDiscount: number) {
     if (noVowelDiscount <= 0 || noVowelDiscount > 15) {
-      throw new Error('Invalid noVowelDiscount: must be a positive 4-bit number')
+      throw new Error(
+        'Invalid noVowelDiscount: must be a positive 4-bit number'
+      )
     }
     this.noVowelDiscount = noVowelDiscount
   }
@@ -128,19 +134,29 @@ export class BlockstackNamespace {
     const lifeHex = `00000000${this.lifetime.toString(16)}`.slice(-8)
     const coeffHex = `00${this.coeff.toString(16)}`.slice(-2)
     const baseHex = `00${this.base.toString(16)}`.slice(-2)
-    const bucketHex = this.buckets.map(b => b.toString(16)).reduce((b1, b2) => b1 + b2, '')
-    const discountHex = this.nonalphaDiscount.toString(16) + this.noVowelDiscount.toString(16)
+    const bucketHex = this.buckets
+      .map(b => b.toString(16))
+      .reduce((b1, b2) => b1 + b2, '')
+    const discountHex =
+      this.nonalphaDiscount.toString(16) + this.noVowelDiscount.toString(16)
     const versionHex = `0000${this.version.toString(16)}`.slice(-4)
     const namespaceIDHex = Buffer.from(this.namespaceID).toString('hex')
 
-    return lifeHex + coeffHex + baseHex + bucketHex + discountHex + versionHex + namespaceIDHex
+    return (
+      lifeHex +
+      coeffHex +
+      baseHex +
+      bucketHex +
+      discountHex +
+      versionHex +
+      namespaceIDHex
+    )
   }
 }
 
-
 /**
-* @ignore
-*/
+ * @ignore
+ */
 function asAmountV2(amount: AmountType): AmountTypeV2 {
   // convert an AmountType v1 or v2 to an AmountTypeV2.
   // the "units" of a v1 amount type are always 'BTC'
@@ -152,8 +168,8 @@ function asAmountV2(amount: AmountType): AmountTypeV2 {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 function makeTXbuilder() {
   const txb = new TransactionBuilder(config.network.layer1)
   txb.setVersion(1)
@@ -161,8 +177,8 @@ function makeTXbuilder() {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 function opEncode(opcode: string): string {
   // NOTE: must *always* a 3-character string
   const res = `${config.network.MAGIC_BYTES}${opcode}`
@@ -173,11 +189,14 @@ function opEncode(opcode: string): string {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function makePreorderSkeleton(
-  fullyQualifiedName: string, consensusHash: string, preorderAddress: string,
-  burnAddress: string, burn: AmountType,
+  fullyQualifiedName: string,
+  consensusHash: string,
+  preorderAddress: string,
+  burnAddress: string,
+  burn: AmountType,
   registerAddress: string = null
 ) {
   // Returns a preorder tx skeleton.
@@ -198,7 +217,10 @@ export function makePreorderSkeleton(
   const burnAmount = asAmountV2(burn)
   const network = config.network
   const nameBuff = Buffer.from(decodeB40(fullyQualifiedName), 'hex') // base40
-  const scriptPublicKey = bjsAddress.toOutputScript(preorderAddress, network.layer1)
+  const scriptPublicKey = bjsAddress.toOutputScript(
+    preorderAddress,
+    network.layer1
+  )
 
   const dataBuffers = [nameBuff, scriptPublicKey]
 
@@ -221,7 +243,9 @@ export function makePreorderSkeleton(
     const burnHex = burnAmount.amount.toString(16, 2)
     if (burnHex.length > 16) {
       // exceeds 2**64; can't fit
-      throw new Error(`Cannot preorder '${fullyQualifiedName}': cannot fit price into 8 bytes`)
+      throw new Error(
+        `Cannot preorder '${fullyQualifiedName}': cannot fit price into 8 bytes`
+      )
     }
     const paddedBurnHex = `0000000000000000${burnHex}`.slice(-16)
 
@@ -246,11 +270,13 @@ export function makePreorderSkeleton(
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function makeRegisterSkeleton(
-  fullyQualifiedName: string, ownerAddress: string,
-  valueHash: string = null, burnTokenAmountHex: string = null
+  fullyQualifiedName: string,
+  ownerAddress: string,
+  valueHash: string = null,
+  burnTokenAmountHex: string = null
 ) {
   // Returns a register tx skeleton.
   //   with 2 outputs : 1. The register OP_RETURN
@@ -291,11 +317,15 @@ export function makeRegisterSkeleton(
 
   if (!!valueHash) {
     if (valueHash.length !== 40) {
-      throw new Error('Value hash length incorrect. Expecting 20-bytes, hex-encoded')
+      throw new Error(
+        'Value hash length incorrect. Expecting 20-bytes, hex-encoded'
+      )
     }
     if (!!burnTokenAmountHex) {
       if (burnTokenAmountHex.length !== 16) {
-        throw new Error('Burn field length incorrect.  Expecting 8-bytes, hex-encoded')
+        throw new Error(
+          'Burn field length incorrect.  Expecting 8-bytes, hex-encoded'
+        )
       }
     }
 
@@ -310,7 +340,10 @@ export function makeRegisterSkeleton(
     payload = Buffer.from(fullyQualifiedName, 'ascii')
   }
 
-  const opReturnBuffer = Buffer.concat([Buffer.from(opEncode(':'), 'ascii'), payload])
+  const opReturnBuffer = Buffer.concat([
+    Buffer.from(opEncode(':'), 'ascii'),
+    payload
+  ])
   const nullOutput = payments.embed({ data: [opReturnBuffer] }).output
   const tx = makeTXbuilder()
 
@@ -321,11 +354,15 @@ export function makeRegisterSkeleton(
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function makeRenewalSkeleton(
-  fullyQualifiedName: string, nextOwnerAddress: string, lastOwnerAddress: string,
-  burnAddress: string, burn: AmountType, valueHash: string = null
+  fullyQualifiedName: string,
+  nextOwnerAddress: string,
+  lastOwnerAddress: string,
+  burnAddress: string,
+  burn: AmountType,
+  valueHash: string = null
 ) {
   /*
     Formats
@@ -360,35 +397,40 @@ export function makeRenewalSkeleton(
   const burnAmount = asAmountV2(burn)
   const network = config.network
   const burnTokenAmount = burnAmount.units === 'BTC' ? null : burnAmount.amount
-  const burnBTCAmount = burnAmount.units === 'BTC' 
-    ? burnAmount.amount.toNumber() : DUST_MINIMUM
-  
+  const burnBTCAmount =
+    burnAmount.units === 'BTC' ? burnAmount.amount.toNumber() : DUST_MINIMUM
+
   let burnTokenHex = null
   if (!!burnTokenAmount) {
     const burnHex = burnTokenAmount.toString(16, 2)
     if (burnHex.length > 16) {
-      // exceeds 2**64; can't fit 
-      throw new Error(`Cannot renew '${fullyQualifiedName}': cannot fit price into 8 bytes`)
+      // exceeds 2**64; can't fit
+      throw new Error(
+        `Cannot renew '${fullyQualifiedName}': cannot fit price into 8 bytes`
+      )
     }
     burnTokenHex = `0000000000000000${burnHex}`.slice(-16)
   }
 
   const registerTX = makeRegisterSkeleton(
-    fullyQualifiedName, nextOwnerAddress, valueHash, burnTokenHex
+    fullyQualifiedName,
+    nextOwnerAddress,
+    valueHash,
+    burnTokenHex
   )
-  const txB = TransactionBuilder.fromTransaction(
-    registerTX, network.layer1
-  )
+  const txB = TransactionBuilder.fromTransaction(registerTX, network.layer1)
   txB.addOutput(lastOwnerAddress, DUST_MINIMUM)
   txB.addOutput(burnAddress, burnBTCAmount)
   return txB.buildIncomplete()
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function makeTransferSkeleton(
-  fullyQualifiedName: string, consensusHash: string, newOwner: string,
+  fullyQualifiedName: string,
+  consensusHash: string,
+  newOwner: string,
   keepZonefile: boolean = false
 ) {
   // Returns a transfer tx skeleton.
@@ -433,10 +475,12 @@ export function makeTransferSkeleton(
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function makeUpdateSkeleton(
-  fullyQualifiedName: string, consensusHash: string, valueHash: string
+  fullyQualifiedName: string,
+  consensusHash: string,
+  valueHash: string
 ) {
   // Returns an update tx skeleton.
   //   with 1 output : 1. the Blockstack update OP_RETURN
@@ -461,9 +505,7 @@ export function makeUpdateSkeleton(
   const nameBuff = Buffer.from(fullyQualifiedName, 'ascii')
   const consensusBuff = Buffer.from(consensusHash, 'ascii')
 
-  const hashedName = hash128(Buffer.concat(
-    [nameBuff, consensusBuff]
-  ))
+  const hashedName = hash128(Buffer.concat([nameBuff, consensusBuff]))
 
   opRet.write(opEncode('+'), 0, 3, 'ascii')
   hashedName.copy(opRet, 3)
@@ -479,8 +521,8 @@ export function makeUpdateSkeleton(
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function makeRevokeSkeleton(fullyQualifiedName: string) {
   // Returns a revoke tx skeleton
   //    with 1 output: 1. the Blockstack revoke OP_RETURN
@@ -514,11 +556,14 @@ export function makeRevokeSkeleton(fullyQualifiedName: string) {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function makeNamespacePreorderSkeleton(
-  namespaceID: string, consensusHash: string, preorderAddress: string,
-  registerAddress: string, burn: AmountType
+  namespaceID: string,
+  consensusHash: string,
+  preorderAddress: string,
+  registerAddress: string,
+  burn: AmountType
 ) {
   // Returns a namespace preorder tx skeleton.
   // Returns an unsigned serialized transaction.
@@ -551,14 +596,17 @@ export function makeNamespacePreorderSkeleton(
   const network = config.network
   const burnAddress = network.getDefaultBurnAddress()
   const namespaceIDBuff = Buffer.from(decodeB40(namespaceID), 'hex') // base40
-  const scriptPublicKey = bjsAddress.toOutputScript(preorderAddress, network.layer1)
+  const scriptPublicKey = bjsAddress.toOutputScript(
+    preorderAddress,
+    network.layer1
+  )
   const registerBuff = Buffer.from(registerAddress, 'ascii')
 
   const dataBuffers = [namespaceIDBuff, scriptPublicKey, registerBuff]
   const dataBuff = Buffer.concat(dataBuffers)
 
   const hashed = hash160(dataBuff)
-  
+
   let btcBurnAmount = DUST_MINIMUM
   let opReturnBufferLen = 39
   if (burnAmount.units === 'STACKS') {
@@ -589,10 +637,11 @@ export function makeNamespacePreorderSkeleton(
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function makeNamespaceRevealSkeleton(
-  namespace: BlockstackNamespace, revealAddress: string
+  namespace: BlockstackNamespace,
+  revealAddress: string
 ) {
   /*
    Format:
@@ -622,8 +671,8 @@ export function makeNamespaceRevealSkeleton(
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function makeNamespaceReadySkeleton(namespaceID: string) {
   /*
    Format:
@@ -646,13 +695,16 @@ export function makeNamespaceReadySkeleton(namespaceID: string) {
   return tx.buildIncomplete()
 }
 
-
 // type bitcoin.payments.p2data bitcoin.payments.embed
 
 /**
-* @ignore
-*/
-export function makeNameImportSkeleton(name: string, recipientAddr: string, zonefileHash: string) {
+ * @ignore
+ */
+export function makeNameImportSkeleton(
+  name: string,
+  recipientAddr: string,
+  zonefileHash: string
+) {
   /*
    Format:
 
@@ -677,7 +729,8 @@ export function makeNameImportSkeleton(name: string, recipientAddr: string, zone
 
   const tx = makeTXbuilder()
   const zonefileHashB58 = bjsAddress.toBase58Check(
-    Buffer.from(zonefileHash, 'hex'), network.layer1.pubKeyHash
+    Buffer.from(zonefileHash, 'hex'),
+    network.layer1.pubKeyHash
   )
 
   tx.addOutput(nullOutput, 0)
@@ -688,8 +741,8 @@ export function makeNameImportSkeleton(name: string, recipientAddr: string, zone
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function makeAnnounceSkeleton(messageHash: string) {
   /*
     Format:
@@ -716,11 +769,14 @@ export function makeAnnounceSkeleton(messageHash: string) {
 }
 
 /**
-* @ignore
-*/
-export function makeTokenTransferSkeleton(recipientAddress: string, consensusHash: string,
-                                          tokenType: string, tokenAmount: BN,
-                                          scratchArea: string
+ * @ignore
+ */
+export function makeTokenTransferSkeleton(
+  recipientAddress: string,
+  consensusHash: string,
+  tokenType: string,
+  tokenAmount: BN,
+  scratchArea: string
 ) {
   /*
    Format:
@@ -740,21 +796,35 @@ export function makeTokenTransferSkeleton(recipientAddress: string, consensusHas
   const opReturnBuffer = Buffer.alloc(46 + scratchArea.length)
 
   const tokenTypeHex = Buffer.from(tokenType).toString('hex')
-  const tokenTypeHexPadded = `00000000000000000000000000000000000000${tokenTypeHex}`.slice(-38)
+  const tokenTypeHexPadded = `00000000000000000000000000000000000000${tokenTypeHex}`.slice(
+    -38
+  )
 
   const tokenValueHex = tokenAmount.toString(16, 2)
 
   if (tokenValueHex.length > 16) {
     // exceeds 2**64; can't fit
-    throw new Error(`Cannot send tokens: cannot fit ${tokenAmount.toString()} into 8 bytes`)
+    throw new Error(
+      `Cannot send tokens: cannot fit ${tokenAmount.toString()} into 8 bytes`
+    )
   }
 
   const tokenValueHexPadded = `0000000000000000${tokenValueHex}`.slice(-16)
 
   opReturnBuffer.write(opEncode('$'), 0, 3, 'ascii')
   opReturnBuffer.write(consensusHash, 3, consensusHash.length / 2, 'hex')
-  opReturnBuffer.write(tokenTypeHexPadded, 19, tokenTypeHexPadded.length / 2, 'hex')
-  opReturnBuffer.write(tokenValueHexPadded, 38, tokenValueHexPadded.length / 2, 'hex')
+  opReturnBuffer.write(
+    tokenTypeHexPadded,
+    19,
+    tokenTypeHexPadded.length / 2,
+    'hex'
+  )
+  opReturnBuffer.write(
+    tokenValueHexPadded,
+    38,
+    tokenValueHexPadded.length / 2,
+    'hex'
+  )
   opReturnBuffer.write(scratchArea, 46, scratchArea.length, 'ascii')
 
   const nullOutput = payments.embed({ data: [opReturnBuffer] }).output

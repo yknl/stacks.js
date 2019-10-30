@@ -3,7 +3,7 @@ import inspector from 'schema-inspector'
 import { extractProfile } from '../profileTokens'
 import { Profile } from '../profile'
 
-const schemaDefinition: {[key: string]: any} = {
+const schemaDefinition: { [key: string]: any } = {
   type: 'object',
   properties: {
     '@context': { type: 'string', optional: true },
@@ -18,13 +18,17 @@ const schemaDefinition: {[key: string]: any} = {
 export class CreativeWork extends Profile {
   constructor(profile = {}) {
     super(profile)
-    this._profile = Object.assign({}, {
-      '@type': 'CreativeWork'
-    }, this._profile)
+    this._profile = Object.assign(
+      {},
+      {
+        '@type': 'CreativeWork'
+      },
+      this._profile
+    )
   }
 
   /**
-   * 
+   *
    * @ignore
    */
   static validateSchema(profile: any, strict = false) {

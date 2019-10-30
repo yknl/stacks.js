@@ -14,7 +14,7 @@ import { fetchAppManifest } from './authProvider'
  * @return {Boolean} Returns `true` if the signature matches the claimed public key
  * @throws {Error} if `token` contains multiple public keys
  * @private
- * @ignore 
+ * @ignore
  */
 export function doSignaturesMatchPublicKeys(token: string) {
   const payload = decodeToken(token).payload
@@ -49,7 +49,7 @@ export function doSignaturesMatchPublicKeys(token: string) {
  * @return {Boolean} if the identity address and public keys match
  * @throws {Error} if ` token` has multiple public keys
  * @private
- * @ignore 
+ * @ignore
  */
 export function doPublicKeysMatchIssuer(token: string) {
   const payload = decodeToken(token).payload
@@ -83,46 +83,50 @@ export function doPublicKeysMatchIssuer(token: string) {
  * `true` if the username is owned by the public key, otherwise the
  * `Promise` resolves to `false`
  * @private
- * @ignore 
+ * @ignore
  */
-export function doPublicKeysMatchUsername(token: string,
-                                          nameLookupURL: string) {
-  return Promise.resolve().then(() => {
-    const payload = decodeToken(token).payload
-    if (typeof payload === 'string') {
-      throw new Error('Unexpected token payload type of string')
-    }
-    if (!payload.username) {
-      return true
-    }
+export function doPublicKeysMatchUsername(
+  token: string,
+  nameLookupURL: string
+) {
+  return Promise.resolve()
+    .then(() => {
+      const payload = decodeToken(token).payload
+      if (typeof payload === 'string') {
+        throw new Error('Unexpected token payload type of string')
+      }
+      if (!payload.username) {
+        return true
+      }
 
-    if (payload.username === null) {
-      return true
-    }
+      if (payload.username === null) {
+        return true
+      }
 
-    if (nameLookupURL === null) {
-      return false
-    }
+      if (nameLookupURL === null) {
+        return false
+      }
 
-    const username = payload.username
-    const url = `${nameLookupURL.replace(/\/$/, '')}/${username}`
-    return fetchPrivate(url)
-      .then(response => response.text())
-      .then((responseText) => {
-        const responseJSON = JSON.parse(responseText)
-        if (responseJSON.hasOwnProperty('address')) {
-          const nameOwningAddress = responseJSON.address
-          const addressFromIssuer = getAddressFromDID(payload.iss)
-          if (nameOwningAddress === addressFromIssuer) {
-            return true
+      const username = payload.username
+      const url = `${nameLookupURL.replace(/\/$/, '')}/${username}`
+      return fetchPrivate(url)
+        .then(response => response.text())
+        .then(responseText => {
+          const responseJSON = JSON.parse(responseText)
+          if (responseJSON.hasOwnProperty('address')) {
+            const nameOwningAddress = responseJSON.address
+            const addressFromIssuer = getAddressFromDID(payload.iss)
+            if (nameOwningAddress === addressFromIssuer) {
+              return true
+            } else {
+              return false
+            }
           } else {
             return false
           }
-        } else {
-          return false
-        }
-      })
-  }).catch(() => false)
+        })
+    })
+    .catch(() => false)
 }
 
 /**
@@ -133,7 +137,7 @@ export function doPublicKeysMatchUsername(token: string,
  * @return {Boolean} `true` if the token was issued after the current time,
  * otherwise returns `false`
  * @private
- * @ignore 
+ * @ignore
  */
 export function isIssuanceDateValid(token: string) {
   const payload = decodeToken(token).payload
@@ -162,7 +166,7 @@ export function isIssuanceDateValid(token: string) {
  * if the `token` has expired
  *
  * @private
- * @ignore 
+ * @ignore
  */
 export function isExpirationDateValid(token: string) {
   const payload = decodeToken(token).payload
@@ -189,7 +193,7 @@ export function isExpirationDateValid(token: string) {
  * @param  {String}  token encoded and signed authentication token
  * @return {Boolean} `true` if valid, otherwise `false`
  * @private
- * @ignore 
+ * @ignore
  */
 export function isManifestUriValid(token: string) {
   const payload = decodeToken(token).payload
@@ -204,7 +208,7 @@ export function isManifestUriValid(token: string) {
  * @param  {String}  token encoded and signed authentication token
  * @return {Boolean} `true` if valid, otherwise `false`
  * @private
- * @ignore 
+ * @ignore
  */
 export function isRedirectUriValid(token: string) {
   const payload = decodeToken(token).payload
@@ -227,27 +231,32 @@ export function isRedirectUriValid(token: string) {
  *  is valid and false if it does not. It rejects with a String if the
  *  token is not signed
  * @private
- * @ignore 
+ * @ignore
  */
 export function verifyAuthRequest(token: string) {
-  return Promise.resolve().then(() => {
-    if (decodeToken(token).header.alg === 'none') {
-      throw new Error('Token must be signed in order to be verified')
-    }
-  }).then(() => Promise.all([
-    isExpirationDateValid(token),
-    isIssuanceDateValid(token),
-    doSignaturesMatchPublicKeys(token),
-    doPublicKeysMatchIssuer(token),
-    isManifestUriValid(token),
-    isRedirectUriValid(token)
-  ])).then((values) => {
-    if (values.every(Boolean)) {
-      return true
-    } else {
-      return false
-    }
-  })
+  return Promise.resolve()
+    .then(() => {
+      if (decodeToken(token).header.alg === 'none') {
+        throw new Error('Token must be signed in order to be verified')
+      }
+    })
+    .then(() =>
+      Promise.all([
+        isExpirationDateValid(token),
+        isIssuanceDateValid(token),
+        doSignaturesMatchPublicKeys(token),
+        doPublicKeysMatchIssuer(token),
+        isManifestUriValid(token),
+        isRedirectUriValid(token)
+      ])
+    )
+    .then(values => {
+      if (values.every(Boolean)) {
+        return true
+      } else {
+        return false
+      }
+    })
 }
 
 /**
@@ -257,17 +266,18 @@ export function verifyAuthRequest(token: string) {
  * @return {Promise} that resolves to the app manifest file in JSON format
  * or rejects if the auth request or app manifest file is invalid
  * @private
- * @ignore 
+ * @ignore
  */
 export function verifyAuthRequestAndLoadManifest(token: string) {
-  return Promise.resolve().then(() => verifyAuthRequest(token)
-    .then((valid) => {
+  return Promise.resolve().then(() =>
+    verifyAuthRequest(token).then(valid => {
       if (valid) {
         return fetchAppManifest(token)
       } else {
         return Promise.reject()
       }
-    }))
+    })
+  )
 }
 
 /**
@@ -277,7 +287,7 @@ export function verifyAuthRequestAndLoadManifest(token: string) {
  * @return {Promise} that resolves to true if auth response
  * is valid and false if it does not
  * @private
- * @ignore 
+ * @ignore
  */
 export function verifyAuthResponse(token: string, nameLookupURL: string) {
   return Promise.all([
@@ -286,7 +296,7 @@ export function verifyAuthResponse(token: string, nameLookupURL: string) {
     doSignaturesMatchPublicKeys(token),
     doPublicKeysMatchIssuer(token),
     doPublicKeysMatchUsername(token, nameLookupURL)
-  ]).then((values) => {
+  ]).then(values => {
     if (values.every(Boolean)) {
       return true
     } else {

@@ -1,8 +1,4 @@
-
-
-export {
-  makePreorderSkeleton
-} from './skeletons'
+export { makePreorderSkeleton } from './skeletons'
 
 export { transactions } from './txbuild'
 

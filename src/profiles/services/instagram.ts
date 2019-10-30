@@ -1,4 +1,3 @@
-
 import * as cheerio from 'cheerio'
 import { Service } from './service'
 
@@ -17,7 +16,9 @@ class Instagram extends Service {
         return normalizedProofUrl
       }
     }
-    throw new Error(`Proof url ${proof.proof_url} is not valid for service ${proof.service}`)
+    throw new Error(
+      `Proof url ${proof.proof_url} is not valid for service ${proof.service}`
+    )
   }
 
   static normalizeUrl(proof: any) {
@@ -39,7 +40,10 @@ class Instagram extends Service {
     const $ = cheerio.load(searchText)
     const username = $('meta[property="og:description"]').attr('content')
     if (username !== undefined && username.split(':').length > 1) {
-      return username.split(':')[0].match(/(@\w+)/)[0].substr(1)
+      return username
+        .split(':')[0]
+        .match(/(@\w+)/)[0]
+        .substr(1)
     } else {
       return ''
     }
@@ -47,11 +51,14 @@ class Instagram extends Service {
 
   static getProofStatement(searchText: string) {
     const $ = cheerio.load(searchText)
-    const statement = $('meta[property="og:description"]')
-      .attr('content')
+    const statement = $('meta[property="og:description"]').attr('content')
 
     if (statement !== undefined && statement.split(':').length > 1) {
-      return statement.split(':')[1].trim().replace('“', '').replace('”', '')
+      return statement
+        .split(':')[1]
+        .trim()
+        .replace('“', '')
+        .replace('”', '')
     } else {
       return ''
     }

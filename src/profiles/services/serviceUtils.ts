@@ -1,8 +1,11 @@
 /**
- * 
+ *
  * @ignore
  */
-export function containsValidProofStatement(searchText: string, name: string | null = null) {
+export function containsValidProofStatement(
+  searchText: string,
+  name: string | null = null
+) {
   if (!name) {
     return false
   }
@@ -20,24 +23,28 @@ export function containsValidProofStatement(searchText: string, name: string | n
     username = name.split('.id')[0]
   }
 
-  const verificationStyles = username != null ? [
-    `verifying myself: my bitcoin username is +${username}`,
-    `verifying myself: my bitcoin username is ${username}`,
-    `verifying myself: my openname is ${username}`,
-    `verifying that +${username} is my bitcoin username`,
-    `verifying that ${username} is my bitcoin username`,
-    `verifying that ${username} is my openname`,
-    `verifying that +${username} is my openname`,
-    `verifying i am +${username} on my passcard`,
-    `verifying that +${username} is my blockchain id`,
-    `verifying that "${name}" is my blockstack id`, // id
-    `verifying that ${name} is my blockstack id`,
-    `verifying that &quot;${name}&quot; is my blockstack id`
-  ] : [ // only these formats are valid for non-.id tlds
-    `verifying that "${name}" is my blockstack id`, // id
-    `verifying that ${name} is my blockstack id`,
-    `verifying that &quot;${name}&quot; is my blockstack id`
-  ]
+  const verificationStyles =
+    username != null
+      ? [
+          `verifying myself: my bitcoin username is +${username}`,
+          `verifying myself: my bitcoin username is ${username}`,
+          `verifying myself: my openname is ${username}`,
+          `verifying that +${username} is my bitcoin username`,
+          `verifying that ${username} is my bitcoin username`,
+          `verifying that ${username} is my openname`,
+          `verifying that +${username} is my openname`,
+          `verifying i am +${username} on my passcard`,
+          `verifying that +${username} is my blockchain id`,
+          `verifying that "${name}" is my blockstack id`, // id
+          `verifying that ${name} is my blockstack id`,
+          `verifying that &quot;${name}&quot; is my blockstack id`
+        ]
+      : [
+          // only these formats are valid for non-.id tlds
+          `verifying that "${name}" is my blockstack id`, // id
+          `verifying that ${name} is my blockstack id`,
+          `verifying that &quot;${name}&quot; is my blockstack id`
+        ]
 
   for (let i = 0; i < verificationStyles.length; i++) {
     const verificationStyle = verificationStyles[i]
@@ -46,9 +53,11 @@ export function containsValidProofStatement(searchText: string, name: string | n
     }
   }
 
-  if (username != null
-      && searchText.includes('verifymyonename')
-      && searchText.includes(`+${username}`)) {
+  if (
+    username != null &&
+    searchText.includes('verifymyonename') &&
+    searchText.includes(`+${username}`)
+  ) {
     return true
   }
 
@@ -56,10 +65,13 @@ export function containsValidProofStatement(searchText: string, name: string | n
 }
 
 /**
- * 
+ *
  * @ignore
  */
-export function containsValidAddressProofStatement(proofStatement: string, address: string) {
+export function containsValidAddressProofStatement(
+  proofStatement: string,
+  address: string
+) {
   proofStatement = proofStatement.split(address)[0].toLowerCase() + address
 
   const verificationStyles = [

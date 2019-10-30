@@ -1,4 +1,3 @@
-
 import { resolveZoneFileToProfile } from './profileZoneFiles'
 import { config } from '../config'
 import { fetchPrivate } from '../fetchUtil'
@@ -12,26 +11,34 @@ import { fetchPrivate } from '../fetchUtil'
  * blockstack.js [[getNameInfo]] function.
  * @returns {Promise} that resolves to a profile object
  */
-export function lookupProfile(username: string, zoneFileLookupURL?: string): Promise<any> {
+export function lookupProfile(
+  username: string,
+  zoneFileLookupURL?: string
+): Promise<any> {
   if (!username) {
     return Promise.reject()
   }
   let lookupPromise
   if (zoneFileLookupURL) {
     const url = `${zoneFileLookupURL.replace(/\/$/, '')}/${username}`
-    lookupPromise = fetchPrivate(url)
-      .then(response => response.json())
+    lookupPromise = fetchPrivate(url).then(response => response.json())
   } else {
     lookupPromise = config.network.getNameInfo(username)
   }
-  return lookupPromise
-    .then((responseJSON) => {
-      if (responseJSON.hasOwnProperty('zonefile')
-          && responseJSON.hasOwnProperty('address')) {
-        return resolveZoneFileToProfile(responseJSON.zonefile, responseJSON.address)
-      } else {
-        throw new Error('Invalid zonefile lookup response: did not contain `address`'
-                        + ' or `zonefile` field')
-      }
-    })
+  return lookupPromise.then(responseJSON => {
+    if (
+      responseJSON.hasOwnProperty('zonefile') &&
+      responseJSON.hasOwnProperty('address')
+    ) {
+      return resolveZoneFileToProfile(
+        responseJSON.zonefile,
+        responseJSON.address
+      )
+    } else {
+      throw new Error(
+        'Invalid zonefile lookup response: did not contain `address`' +
+          ' or `zonefile` field'
+      )
+    }
+  })
 }

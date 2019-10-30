@@ -5,9 +5,16 @@ import { Profile } from '../profile'
 import { extractProfile } from '../profileTokens'
 import { getPersonFromLegacyFormat } from './personLegacy'
 import {
-  getName, getFamilyName, getGivenName, getAvatarUrl, getDescription,
-  getVerifiedAccounts, getAddress, getBirthDate,
-  getConnections, getOrganizations
+  getName,
+  getFamilyName,
+  getGivenName,
+  getAvatarUrl,
+  getDescription,
+  getVerifiedAccounts,
+  getAddress,
+  getBirthDate,
+  getConnections,
+  getOrganizations
 } from './personUtils'
 
 const schemaDefinition = {
@@ -104,9 +111,13 @@ const schemaDefinition = {
 export class Person extends Profile {
   constructor(profile = {}) {
     super(profile)
-    this._profile = Object.assign({}, {
-      '@type': 'Person'
-    }, this._profile)
+    this._profile = Object.assign(
+      {},
+      {
+        '@type': 'Person'
+      },
+      this._profile
+    )
   }
 
   static validateSchema(profile: any, strict = false) {

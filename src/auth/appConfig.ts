@@ -1,5 +1,9 @@
-
-import { DEFAULT_CORE_NODE, DEFAULT_SCOPE, DEFAULT_BLOCKSTACK_HOST, AuthScope } from './authConstants'
+import {
+  DEFAULT_CORE_NODE,
+  DEFAULT_SCOPE,
+  DEFAULT_BLOCKSTACK_HOST,
+  AuthScope
+} from './authConstants'
 import { getGlobalObject } from '../utils'
 
 /**
@@ -10,7 +14,7 @@ import { getGlobalObject } from '../utils'
  * `window.location.origin` as the app domain.
  * On non-browser platforms, you need to
  * specify an app domain as the second argument.
- * 
+ *
  */
 export class AppConfig {
   /**
@@ -24,7 +28,6 @@ export class AppConfig {
    *
    */
   scopes: Array<AuthScope | string>
-
 
   /**
    * Path on app domain to redirect users to after authentication. The
@@ -64,15 +67,18 @@ export class AppConfig {
    * @param {string} redirectPath - path on app domain to redirect users to after authentication
    * @param {string} manifestPath - path relative to app domain of app's manifest file
    * @param {string} coreNode - override the default or user selected core node
-   * @param {string} authenticatorURL - the web-based fall back authenticator 
+   * @param {string} authenticatorURL - the web-based fall back authenticator
    * ([[DEFAULT_BLOCKSTACK_HOST]])
    */
-  constructor(scopes: Array<string> = DEFAULT_SCOPE.slice(),
-              appDomain: string = getGlobalObject('location', { returnEmptyObject: true }).origin,
-              redirectPath: string = '',
-              manifestPath: string = '/manifest.json',
-              coreNode: string | null = null,
-              authenticatorURL: string = DEFAULT_BLOCKSTACK_HOST) {
+  constructor(
+    scopes: Array<string> = DEFAULT_SCOPE.slice(),
+    appDomain: string = getGlobalObject('location', { returnEmptyObject: true })
+      .origin,
+    redirectPath: string = '',
+    manifestPath: string = '/manifest.json',
+    coreNode: string | null = null,
+    authenticatorURL: string = DEFAULT_BLOCKSTACK_HOST
+  ) {
     this.appDomain = appDomain
     this.scopes = scopes
     this.redirectPath = redirectPath

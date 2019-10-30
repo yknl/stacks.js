@@ -1,4 +1,3 @@
-
 export {
   encryptECIES,
   decryptECIES,
@@ -8,7 +7,4 @@ export {
   getHexFromBN
 } from './ec'
 
-export { 
-  encryptMnemonic,
-  decryptMnemonic
-} from './wallet'
+export { encryptMnemonic, decryptMnemonic } from './wallet'

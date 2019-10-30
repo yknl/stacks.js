@@ -1,8 +1,8 @@
 /**
- * 
- * @param serviceName 
- * @param data 
- * 
+ *
+ * @param serviceName
+ * @param data
+ *
  * @ignore
  */
 function formatAccount(serviceName: string, data: any) {
@@ -20,24 +20,24 @@ function formatAccount(serviceName: string, data: any) {
 }
 
 /**
- * 
- * @param profile 
- * 
+ *
+ * @param profile
+ *
  * @ignore
  */
 export function getPersonFromLegacyFormat(profile: any) {
   const profileData: {
-    ['@type']: string, 
-    account?: any[],
-    name?: string,
-    description?: string,
+    ['@type']: string
+    account?: any[]
+    name?: string
+    description?: string
     address?: {
-      ['@type']: string,
+      ['@type']: string
       addressLocality: string
-    },
-    image?: any[],
+    }
+    image?: any[]
     website?: Array<{
-      ['@type']: string,
+      ['@type']: string
       url: string
     }>
   } = {
@@ -80,10 +80,12 @@ export function getPersonFromLegacyFormat(profile: any) {
     }
 
     if (profile.website) {
-      profileData.website = [{
-        '@type': 'WebSite',
-        url: profile.website
-      }]
+      profileData.website = [
+        {
+          '@type': 'WebSite',
+          url: profile.website
+        }
+      ]
     }
 
     const accounts = []

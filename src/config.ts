@@ -1,8 +1,8 @@
 import { network } from './network'
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 const config = {
   network: network.defaults.MAINNET_DEFAULT,
   logLevel: 'debug'

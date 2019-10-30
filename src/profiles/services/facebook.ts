@@ -1,4 +1,3 @@
-
 import * as cheerio from 'cheerio'
 import { Service } from './service'
 
@@ -24,7 +23,9 @@ class Facebook extends Service {
       const postId = tokens[1]
       proofUrl = `https://www.facebook.com/${proof.identifier}/posts/${postId}`
     } else {
-      throw new Error(`Proof url ${proof.proof_url} is not valid for service ${proof.service}`)
+      throw new Error(
+        `Proof url ${proof.proof_url} is not valid for service ${proof.service}`
+      )
     }
 
     return proofUrl
@@ -33,7 +34,7 @@ class Facebook extends Service {
   static getProofStatement(searchText: string) {
     const $ = cheerio.load(searchText)
     const statement = $('meta[name="description"]').attr('content')
-    return (statement !== undefined) ? statement.trim() : ''
+    return statement !== undefined ? statement.trim() : ''
   }
 }
 

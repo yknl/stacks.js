@@ -7,17 +7,18 @@ import { extractProfile } from '../profileTokens'
 import { fetchPrivate } from '../../fetchUtil'
 
 /**
- * 
- * @param zoneFile 
- * @param publicKeyOrAddress 
- * @param callback 
- * 
+ *
+ * @param zoneFile
+ * @param publicKeyOrAddress
+ * @param callback
+ *
  * @ignore
  */
 export function resolveZoneFileToPerson(
-  zoneFile: any, 
-  publicKeyOrAddress: string, 
-  callback: (profile: any) => void) {
+  zoneFile: any,
+  publicKeyOrAddress: string,
+  callback: (profile: any) => void
+) {
   let zoneFileJson = null
   try {
     zoneFileJson = parseZoneFile(zoneFile)
@@ -49,14 +50,14 @@ export function resolveZoneFileToPerson(
     fetchPrivate(tokenFileUrl)
       .then(response => response.text())
       .then(responseText => JSON.parse(responseText))
-      .then((responseJson) => {
+      .then(responseJson => {
         const tokenRecords = responseJson
         const token = tokenRecords[0].token
         const profile = extractProfile(token, publicKeyOrAddress)
 
         callback(profile)
       })
-      .catch((error) => {
+      .catch(error => {
         console.warn(error)
       })
   } else {

@@ -1,9 +1,6 @@
-
 import { SessionData, SessionOptions } from './sessionData'
 // import { BLOCKSTACK_GAIA_HUB_LABEL } from '../storage/hub'
-import {
-  LOCALSTORAGE_SESSION_KEY
-} from './authConstants'
+import { LOCALSTORAGE_SESSION_KEY } from './authConstants'
 import { NoSessionDataError } from '../errors'
 // import { Logger } from '../logger'
 
@@ -48,7 +45,6 @@ export class InstanceDataStore extends SessionDataStore {
     }
   }
 
-
   getSessionData(): SessionData {
     if (!this.sessionData) {
       throw new NoSessionDataError('No session data was found.')
@@ -76,10 +72,12 @@ export class LocalStorageStore extends SessionDataStore {
 
   constructor(sessionOptions?: SessionOptions) {
     super(sessionOptions)
-    if (sessionOptions
-      && sessionOptions.storeOptions
-      && sessionOptions.storeOptions.localStorageKey
-      && (typeof sessionOptions.storeOptions.localStorageKey === 'string')) {
+    if (
+      sessionOptions &&
+      sessionOptions.storeOptions &&
+      sessionOptions.storeOptions.localStorageKey &&
+      typeof sessionOptions.storeOptions.localStorageKey === 'string'
+    ) {
       this.key = sessionOptions.storeOptions.localStorageKey
     } else {
       this.key = LOCALSTORAGE_SESSION_KEY

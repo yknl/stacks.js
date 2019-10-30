@@ -1,4 +1,3 @@
-
 import * as cheerio from 'cheerio'
 import { Service } from './service'
 
@@ -14,7 +13,7 @@ class LinkedIn extends Service {
 
   static getProofUrl(proof: any) {
     const baseUrls = this.getBaseUrls()
-    
+
     let proofUrl = proof.proof_url.toLowerCase()
     proofUrl = super.prefixScheme(proofUrl)
 
@@ -23,7 +22,9 @@ class LinkedIn extends Service {
         return proofUrl
       }
     }
-    throw new Error(`Proof url ${proof.proof_url} is not valid for service ${proof.service}`)
+    throw new Error(
+      `Proof url ${proof.proof_url} is not valid for service ${proof.service}`
+    )
   }
 
   static normalizeUrl(proof: any) {
@@ -45,7 +46,11 @@ class LinkedIn extends Service {
       const url = profileLink.attr('href')
 
       // Parse URL for identifier
-      const identifier = url.split('?').shift().split('/').pop()
+      const identifier = url
+        .split('?')
+        .shift()
+        .split('/')
+        .pop()
 
       return identifier
     } else {

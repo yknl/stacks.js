@@ -1,4 +1,3 @@
-
 import { GaiaHubConfig } from '../storage/hub'
 import { InvalidStateError } from '../errors'
 import { UserData } from './authApp'
@@ -6,14 +5,14 @@ import { UserData } from './authApp'
 const SESSION_VERSION = '1.0.0'
 
 export interface SessionOptions {
-  appPrivateKey?: string,
-  username?: string,
-  identityAddress?: string,
-  coreNode?: string,
-  hubUrl?: string,
-  userData?: UserData,
-  transitKey?: string,
-  localStorageKey?: string,
+  appPrivateKey?: string
+  username?: string
+  identityAddress?: string
+  coreNode?: string
+  hubUrl?: string
+  userData?: UserData
+  transitKey?: string
+  localStorageKey?: string
   storeOptions?: {
     localStorageKey?: string
   }
@@ -62,7 +61,9 @@ export class SessionData {
 
   static fromJSON(json: any): SessionData {
     if (json.version !== SESSION_VERSION) {
-      throw new InvalidStateError(`JSON data version ${json.version} not supported by SessionData`)
+      throw new InvalidStateError(
+        `JSON data version ${json.version} not supported by SessionData`
+      )
     }
     const options: SessionOptions = {
       appPrivateKey: json.appPrivateKey,

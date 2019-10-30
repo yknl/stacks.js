@@ -1,15 +1,9 @@
 import { config } from './config'
 
-const levels = [
-  'debug',
-  'info',
-  'warn',
-  'error',
-  'none'
-]
+const levels = ['debug', 'info', 'warn', 'error', 'none']
 
-const levelToInt: {[level: string]: number} = {}
-const intToLevel: {[int: number]: string} = {}
+const levelToInt: { [level: string]: number } = {}
+const intToLevel: { [int: number]: string } = {}
 
 for (let index = 0; index < levels.length; index++) {
   const level = levels[index]
@@ -18,8 +12,8 @@ for (let index = 0; index < levels.length; index++) {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class Logger {
   static error(message: string) {
     if (!this.shouldLog('error')) return

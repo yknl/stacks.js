@@ -1,9 +1,12 @@
 import * as queryString from 'query-string'
 // @ts-ignore: Could not find a declaration file for module
 import { decodeToken } from 'jsontokens'
-import { BLOCKSTACK_HANDLER, getGlobalObject, updateQueryStringParameter } from '../utils'
+import {
+  BLOCKSTACK_HANDLER,
+  getGlobalObject,
+  updateQueryStringParameter
+} from '../utils'
 import { fetchPrivate } from '../fetchUtil'
-
 
 import { Logger } from '../logger'
 
@@ -12,13 +15,18 @@ import { Logger } from '../logger'
  * @return {String|null} the authentication request or `null` if
  * the query string parameter `authRequest` is not found
  * @private
- * @ignore 
+ * @ignore
  */
 export function getAuthRequestFromURL() {
-  const location = getGlobalObject('location', { throwIfUnavailable: true, usageDesc: 'getAuthRequestFromURL' })
+  const location = getGlobalObject('location', {
+    throwIfUnavailable: true,
+    usageDesc: 'getAuthRequestFromURL'
+  })
   const queryDict = queryString.parse(location.search)
   if (queryDict.authRequest) {
-    return (<string>queryDict.authRequest).split(`${BLOCKSTACK_HANDLER}:`).join('')
+    return (<string>queryDict.authRequest)
+      .split(`${BLOCKSTACK_HANDLER}:`)
+      .join('')
   } else {
     return null
   }
@@ -32,7 +40,7 @@ export function getAuthRequestFromURL() {
  * object manifest file unless there's an error in which case rejects with an error
  * message.
  * @private
- * @ignore 
+ * @ignore
  */
 export function fetchAppManifest(authRequest: string): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -42,17 +50,17 @@ export function fetchAppManifest(authRequest: string): Promise<any> {
       const payload = decodeToken(authRequest).payload
       if (typeof payload === 'string') {
         throw new Error('Unexpected token payload type of string')
-      }  
+      }
       const manifestURI = payload.manifest_uri
       try {
         Logger.debug(`Fetching manifest from ${manifestURI}`)
         fetchPrivate(manifestURI)
           .then(response => response.text())
           .then(responseText => JSON.parse(responseText))
-          .then((responseJSON) => {
+          .then(responseJSON => {
             resolve({ ...responseJSON, manifestURI })
           })
-          .catch((e) => {
+          .catch(e => {
             Logger.debug(e.stack)
             reject('Could not fetch manifest.json')
           })
@@ -74,7 +82,7 @@ export function fetchAppManifest(authRequest: string): Promise<any> {
  * @return {void}
  * @throws {Error} if there is no redirect uri
  * @private
- * @ignore 
+ * @ignore
  */
 export function redirectUserToApp(authRequest: string, authResponse: string) {
   const payload = decodeToken(authRequest).payload
@@ -84,10 +92,17 @@ export function redirectUserToApp(authRequest: string, authResponse: string) {
   let redirectURI = payload.redirect_uri
   Logger.debug(redirectURI)
   if (redirectURI) {
-    redirectURI = updateQueryStringParameter(redirectURI, 'authResponse', authResponse)
+    redirectURI = updateQueryStringParameter(
+      redirectURI,
+      'authResponse',
+      authResponse
+    )
   } else {
     throw new Error('Invalid redirect URI')
   }
-  const location = getGlobalObject('location', { throwIfUnavailable: true, usageDesc: 'redirectUserToApp' })
+  const location = getGlobalObject('location', {
+    throwIfUnavailable: true,
+    usageDesc: 'redirectUserToApp'
+  })
   location.href = redirectURI
 }

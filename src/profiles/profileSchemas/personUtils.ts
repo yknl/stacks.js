@@ -19,7 +19,7 @@ export function getName(profile: any) {
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function getGivenName(profile: any) {
@@ -38,7 +38,7 @@ export function getGivenName(profile: any) {
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function getFamilyName(profile: any) {
@@ -57,7 +57,7 @@ export function getFamilyName(profile: any) {
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function getDescription(profile: any) {
@@ -73,7 +73,7 @@ export function getDescription(profile: any) {
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function getAvatarUrl(profile: any) {
@@ -96,7 +96,7 @@ export function getAvatarUrl(profile: any) {
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function getVerifiedAccounts(profile: any, verifications?: any[]) {
@@ -110,14 +110,16 @@ export function getVerifiedAccounts(profile: any, verifications?: any[]) {
       let accountIsValid = false
       let proofUrl = null
 
-      verifications.map((verification) => {
+      verifications.map(verification => {
         if (verification.hasOwnProperty('proof_url')) {
           verification.proofUrl = verification.proof_url
         }
-        if (verification.valid
-            && verification.service === account.service
-            && verification.identifier === account.identifier
-            && verification.proofUrl) {
+        if (
+          verification.valid &&
+          verification.service === account.service &&
+          verification.identifier === account.identifier &&
+          verification.proofUrl
+        ) {
           accountIsValid = true
           proofUrl = verification.proofUrl
           return true
@@ -139,7 +141,7 @@ export function getVerifiedAccounts(profile: any, verifications?: any[]) {
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function getOrganizations(profile: any) {
@@ -157,7 +159,7 @@ export function getOrganizations(profile: any) {
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function getConnections(profile: any) {
@@ -175,7 +177,7 @@ export function getConnections(profile: any) {
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function getAddress(profile: any) {
@@ -210,7 +212,7 @@ export function getAddress(profile: any) {
 }
 
 /**
- * 
+ *
  * @ignore
  */
 export function getBirthDate(profile: any) {
@@ -219,15 +221,27 @@ export function getBirthDate(profile: any) {
   }
 
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
   ]
 
   let birthDateString = null
 
   if (profile.hasOwnProperty('birthDate')) {
     const date = new Date(profile.birthDate)
-    birthDateString = `${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
+    birthDateString = `${
+      monthNames[date.getMonth()]
+    } ${date.getDate()}, ${date.getFullYear()}`
   }
 
   return birthDateString

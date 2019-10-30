@@ -1,6 +1,4 @@
-export {
-  Profile
-} from './profile'
+export { Profile } from './profile'
 
 export {
   Person,
@@ -16,9 +14,7 @@ export {
   extractProfile
 } from './profileTokens'
 
-export {
-  validateProofs
-} from './profileProofs'
+export { validateProofs } from './profileProofs'
 
 export {
   containsValidProofStatement,
@@ -31,6 +27,4 @@ export {
   resolveZoneFileToProfile
 } from './profileZoneFiles'
 
-export {
-  lookupProfile
-} from './profileLookup'
+export { lookupProfile } from './profileLookup'

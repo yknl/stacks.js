@@ -1,4 +1,3 @@
-
 import * as cheerio from 'cheerio'
 import { Service } from './service'
 
@@ -20,7 +19,10 @@ class Twitter extends Service {
     const $ = cheerio.load(searchText)
     const statement = $('meta[property="og:description"]').attr('content')
     if (statement !== undefined) {
-      return statement.trim().replace('“', '').replace('”', '')
+      return statement
+        .trim()
+        .replace('“', '')
+        .replace('”', '')
     } else {
       return ''
     }

@@ -6,10 +6,10 @@ import { Logger } from '../logger'
 import { fetchPrivate } from '../fetchUtil'
 
 /**
- * 
- * @param origin 
- * @param tokenFileUrl 
- * 
+ *
+ * @param origin
+ * @param tokenFileUrl
+ *
  * @ignore
  */
 export function makeProfileZoneFile(origin: string, tokenFileUrl: string) {
@@ -37,14 +37,13 @@ export function makeProfileZoneFile(origin: string, tokenFileUrl: string) {
 
   const zoneFileTemplate = '{$origin}\n{$ttl}\n{uri}\n'
 
-
   return makeZoneFile(zoneFile, zoneFileTemplate)
 }
 
 /**
- * 
- * @param zoneFileJson 
- * 
+ *
+ * @param zoneFileJson
+ *
  * @ignore
  */
 export function getTokenFileUrl(zoneFileJson: any): string | null {
@@ -76,13 +75,16 @@ export function getTokenFileUrl(zoneFileJson: any): string | null {
 }
 
 /**
- * 
- * @param zoneFile 
- * @param publicKeyOrAddress 
- * 
+ *
+ * @param zoneFile
+ * @param publicKeyOrAddress
+ *
  * @ignore
  */
-export function resolveZoneFileToProfile(zoneFile: any, publicKeyOrAddress: string) {
+export function resolveZoneFileToProfile(
+  zoneFile: any,
+  publicKeyOrAddress: string
+) {
   return new Promise((resolve, reject) => {
     let zoneFileJson = null
     try {
@@ -113,13 +115,18 @@ export function resolveZoneFileToProfile(zoneFile: any, publicKeyOrAddress: stri
       fetchPrivate(tokenFileUrl)
         .then(response => response.text())
         .then(responseText => JSON.parse(responseText))
-        .then((responseJson) => {
+        .then(responseJson => {
           const tokenRecords = responseJson
-          const profile = extractProfile(tokenRecords[0].token, publicKeyOrAddress)
+          const profile = extractProfile(
+            tokenRecords[0].token,
+            publicKeyOrAddress
+          )
           resolve(profile)
         })
-        .catch((error) => {
-          Logger.error(`resolveZoneFileToProfile: error fetching token file ${tokenFileUrl}: ${error}`)
+        .catch(error => {
+          Logger.error(
+            `resolveZoneFileToProfile: error fetching token file ${tokenFileUrl}: ${error}`
+          )
           reject(error)
         })
     } else {

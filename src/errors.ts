@@ -1,7 +1,6 @@
-
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export const ERROR_CODES = {
   MISSING_PARAMETER: 'missing_parameter',
   REMOTE_SERVICE_ERROR: 'remote_service_error',
@@ -13,17 +12,17 @@ export const ERROR_CODES = {
 Object.freeze(ERROR_CODES)
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 type ErrorType = {
-  code: string,
-  parameter?: string,
+  code: string
+  parameter?: string
   message: string
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class BlockstackError extends Error {
   message: string
 
@@ -45,8 +44,8 @@ export class BlockstackError extends Error {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class FileNotFound extends BlockstackError {
   constructor(message: string) {
     super({ message, code: 'file_not_found' })
@@ -55,8 +54,8 @@ export class FileNotFound extends BlockstackError {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class InvalidParameterError extends BlockstackError {
   constructor(parameter: string, message: string = '') {
     super({ code: 'missing_parameter', message, parameter: '' })
@@ -65,8 +64,8 @@ export class InvalidParameterError extends BlockstackError {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class MissingParameterError extends BlockstackError {
   constructor(parameter: string, message: string = '') {
     super({ code: ERROR_CODES.MISSING_PARAMETER, message, parameter })
@@ -75,8 +74,8 @@ export class MissingParameterError extends BlockstackError {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class RemoteServiceError extends BlockstackError {
   response: Response
 
@@ -87,8 +86,8 @@ export class RemoteServiceError extends BlockstackError {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class InvalidDIDError extends BlockstackError {
   constructor(message: string = '') {
     super({ code: 'invalid_did_error', message })
@@ -97,8 +96,8 @@ export class InvalidDIDError extends BlockstackError {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class NotEnoughFundsError extends BlockstackError {
   leftToFund: number
 
@@ -112,8 +111,8 @@ export class NotEnoughFundsError extends BlockstackError {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 
 export class InvalidAmountError extends BlockstackError {
   fees: number
@@ -121,8 +120,9 @@ export class InvalidAmountError extends BlockstackError {
   specifiedAmount: number
 
   constructor(fees: number, specifiedAmount: number) {
-    const message = `Not enough coin to fund fees transaction fees. Fees would be ${fees},`
-          + ` specified spend is  ${specifiedAmount}`
+    const message =
+      `Not enough coin to fund fees transaction fees. Fees would be ${fees},` +
+      ` specified spend is  ${specifiedAmount}`
     super({ code: 'invalid_amount_error', message })
     this.specifiedAmount = specifiedAmount
     this.fees = fees
@@ -132,8 +132,8 @@ export class InvalidAmountError extends BlockstackError {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class LoginFailedError extends BlockstackError {
   constructor(reason: string) {
     const message = `Failed to login: ${reason}`
@@ -144,8 +144,8 @@ export class LoginFailedError extends BlockstackError {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class SignatureVerificationError extends BlockstackError {
   constructor(reason: string) {
     const message = `Failed to verify signature: ${reason}`
@@ -156,8 +156,8 @@ export class SignatureVerificationError extends BlockstackError {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class InvalidStateError extends BlockstackError {
   constructor(message: string) {
     super({ code: ERROR_CODES.INVALID_STATE, message })
@@ -167,8 +167,8 @@ export class InvalidStateError extends BlockstackError {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export class NoSessionDataError extends BlockstackError {
   constructor(message: string) {
     super({ code: ERROR_CODES.INVALID_STATE, message })

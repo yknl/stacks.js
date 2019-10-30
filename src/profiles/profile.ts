@@ -5,25 +5,29 @@ import { signProfileToken, extractProfile } from './profileTokens'
 import { validateProofs } from './profileProofs'
 import { makeProfileZoneFile } from './profileZoneFiles'
 
-const schemaDefinition: {[key: string]: any} = {
+const schemaDefinition: { [key: string]: any } = {
   type: 'object',
   properties: {
     '@context': { type: 'string', optional: true },
     '@type': { type: 'string' }
   }
 }
- 
+
 /**
  * Represents a user profile
- * 
+ *
  */
 export class Profile {
-  _profile: {[key: string]: any}
+  _profile: { [key: string]: any }
 
   constructor(profile = {}) {
-    this._profile = Object.assign({}, {
-      '@context': 'http://schema.org/'
-    }, profile)
+    this._profile = Object.assign(
+      {},
+      {
+        '@context': 'http://schema.org/'
+      },
+      profile
+    )
   }
 
   toJSON() {

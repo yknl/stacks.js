@@ -1,4 +1,3 @@
-
 import * as cheerio from 'cheerio'
 import { Service } from './service'
 
@@ -22,7 +21,9 @@ class HackerNews extends Service {
         return proofUrl
       }
     }
-    throw new Error(`Proof url ${proof.proof_url} is not valid for service ${proof.service}`)
+    throw new Error(
+      `Proof url ${proof.proof_url} is not valid for service ${proof.service}`
+    )
   }
 
   static normalizeUrl(proof: any) {
@@ -31,7 +32,9 @@ class HackerNews extends Service {
 
   static getProofStatement(searchText: string) {
     const $ = cheerio.load(searchText)
-    const tables = $('#hnmain').children().find('table')
+    const tables = $('#hnmain')
+      .children()
+      .find('table')
     let statement = ''
 
     if (tables.length > 0) {
@@ -40,13 +43,15 @@ class HackerNews extends Service {
 
         if (rows.length > 0) {
           rows.each((idx, row) => {
-            const heading = $(row).find('td')
+            const heading = $(row)
+              .find('td')
               .first()
               .text()
               .trim()
 
             if (heading === 'about:') {
-              statement = $(row).find('td')
+              statement = $(row)
+                .find('td')
                 .last()
                 .text()
                 .trim()

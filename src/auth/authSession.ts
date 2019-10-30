@@ -16,22 +16,26 @@ import { fetchPrivate } from '../fetchUtil'
  * @return {String} a JWT signed by the app's private key
  * @deprecated
  * @private
- * @ignore 
+ * @ignore
  */
-export function makeCoreSessionRequest(appDomain: string,
-                                       appMethods: Array<string>,
-                                       appPrivateKey: string,
-                                       blockchainID: string = null,
-                                       thisDevice: string = null) {
+export function makeCoreSessionRequest(
+  appDomain: string,
+  appMethods: Array<string>,
+  appPrivateKey: string,
+  blockchainID: string = null,
+  thisDevice: string = null
+) {
   if (thisDevice === null) {
     thisDevice = '.default'
   }
 
   const appPublicKey = SECP256K1Client.derivePublicKey(appPrivateKey)
-  const appPublicKeys = [{
-    public_key: appPublicKey,
-    device_id: thisDevice
-  }]
+  const appPublicKeys = [
+    {
+      public_key: appPublicKey,
+      device_id: thisDevice
+    }
+  ]
 
   const authBody = {
     version: 1,
@@ -50,7 +54,6 @@ export function makeCoreSessionRequest(appDomain: string,
   return token
 }
 
-
 /**
  * Send Core a request for a session token.
  *
@@ -64,17 +67,20 @@ export function makeCoreSessionRequest(appDomain: string,
  * with an error message otherwise
  * @deprecated
  * @private
- * @ignore 
+ * @ignore
  */
-export function sendCoreSessionRequest(coreHost: string,
-                                       corePort: number,
-                                       coreAuthRequest: string,
-                                       apiPassword: string) {
-  return Promise.resolve().then(() => {
-    if (!apiPassword) {
-      throw new Error('Missing API password')
-    }
-  })
+export function sendCoreSessionRequest(
+  coreHost: string,
+  corePort: number,
+  coreAuthRequest: string,
+  apiPassword: string
+) {
+  return Promise.resolve()
+    .then(() => {
+      if (!apiPassword) {
+        throw new Error('Missing API password')
+      }
+    })
     .then(() => {
       const options = {
         headers: {
@@ -84,13 +90,13 @@ export function sendCoreSessionRequest(coreHost: string,
       const url = `http://${coreHost}:${corePort}/v1/auth?authRequest=${coreAuthRequest}`
       return fetchPrivate(url, options)
     })
-    .then((response) => {
+    .then(response => {
       if (!response.ok) {
         throw new Error('HTTP status not OK')
       }
       return response.text()
     })
-    .then((responseText) => {
+    .then(responseText => {
       const responseJson = JSON.parse(responseText)
       const token = responseJson.token
       if (!token) {
@@ -98,12 +104,11 @@ export function sendCoreSessionRequest(coreHost: string,
       }
       return token
     })
-    .catch((error) => {
+    .catch(error => {
       console.error(error)
       throw new Error('Invalid Core response: not JSON')
     })
 }
-
 
 /**
  * Get a core session token.  Generate an auth request, sign it, send it to Core,
@@ -122,15 +127,17 @@ export function sendCoreSessionRequest(coreHost: string,
  * with an error message.
  * @deprecated
  * @private
- * @ignore 
+ * @ignore
  */
-export function getCoreSession(coreHost: string,
-                               corePort: number,
-                               apiPassword: string,
-                               appPrivateKey: string,
-                               blockchainId: string = null,
-                               authRequest: string = null,
-                               deviceId: string = '0') {
+export function getCoreSession(
+  coreHost: string,
+  corePort: number,
+  apiPassword: string,
+  appPrivateKey: string,
+  blockchainId: string = null,
+  authRequest: string = null,
+  deviceId: string = '0'
+) {
   if (!authRequest) {
     return Promise.reject('No authRequest provided')
   }
@@ -155,11 +162,18 @@ export function getCoreSession(coreHost: string,
     const appMethods = payload.scopes
 
     const coreAuthRequest = makeCoreSessionRequest(
-      appDomain, appMethods, appPrivateKey, blockchainId, deviceId
+      appDomain,
+      appMethods,
+      appPrivateKey,
+      blockchainId,
+      deviceId
     )
 
     return sendCoreSessionRequest(
-      coreHost, corePort, coreAuthRequest, apiPassword
+      coreHost,
+      corePort,
+      coreAuthRequest,
+      apiPassword
     )
   } catch (e) {
     console.error(e.stack)

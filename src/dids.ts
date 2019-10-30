@@ -1,25 +1,25 @@
 import { InvalidDIDError } from './errors'
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function makeDIDFromAddress(address: string) {
   return `did:btc-addr:${address}`
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function makeDIDFromPublicKey(publicKey: string) {
   return `did:ecdsa-pub:${publicKey}`
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function getDIDType(decentralizedID: string) {
   const didParts = decentralizedID.split(':')
-  
+
   if (didParts.length !== 3) {
     throw new InvalidDIDError('Decentralized IDs must have 3 parts')
   }
@@ -32,11 +32,11 @@ export function getDIDType(decentralizedID: string) {
 }
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export function getAddressFromDID(decentralizedID: string) {
   const didType = getDIDType(decentralizedID)
-  
+
   if (didType === 'btc-addr') {
     return decentralizedID.split(':')[2]
   } else {

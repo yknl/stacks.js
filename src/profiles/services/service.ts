@@ -1,40 +1,43 @@
-
 import 'cross-fetch/polyfill'
-import { containsValidProofStatement, containsValidAddressProofStatement } from './serviceUtils'
+import {
+  containsValidProofStatement,
+  containsValidAddressProofStatement
+} from './serviceUtils'
 import { fetchPrivate } from '../../fetchUtil'
 
 /**
  * @ignore
  */
 export class Service {
-  static validateProof(proof: any,
-                       ownerAddress: string,
-                       name: string = null) {
+  static validateProof(proof: any, ownerAddress: string, name: string = null) {
     let proofUrl: string
     return Promise.resolve()
       .then(() => {
         proofUrl = this.getProofUrl(proof)
         return fetchPrivate(proofUrl)
       })
-      .then((res) => {
+      .then(res => {
         if (res.status !== 200) {
           throw new Error(`Proof url ${proofUrl} returned unexpected http status ${res.status}.
               Unable to validate proof.`)
         }
         return res.text()
       })
-      .then((text) => {
+      .then(text => {
         // Validate identity in provided proof body/tags if required
-        if (this.shouldValidateIdentityInBody()
-            && proof.identifier !== this.getProofIdentity(text)) {
+        if (
+          this.shouldValidateIdentityInBody() &&
+          proof.identifier !== this.getProofIdentity(text)
+        ) {
           return proof
         }
         const proofText = this.getProofStatement(text)
-        proof.valid = containsValidProofStatement(proofText, name)
-          || containsValidAddressProofStatement(proofText, ownerAddress)
+        proof.valid =
+          containsValidProofStatement(proofText, name) ||
+          containsValidAddressProofStatement(proofText, ownerAddress)
         return proof
       })
-      .catch((error) => {
+      .catch(error => {
         console.error(error)
         proof.valid = false
         return proof
@@ -79,6 +82,8 @@ export class Service {
         return proofUrl
       }
     }
-    throw new Error(`Proof url ${proof.proof_url} is not valid for service ${proof.service}`)
+    throw new Error(
+      `Proof url ${proof.proof_url} is not valid for service ${proof.service}`
+    )
   }
 }

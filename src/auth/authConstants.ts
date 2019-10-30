@@ -1,19 +1,18 @@
-
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export const BLOCKSTACK_HANDLER = 'blockstack'
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export const BLOCKSTACK_STORAGE_LABEL = 'blockstack'
 /**
-* This constant is used in the [[redirectToSignInWithAuthRequest]]
-*/
+ * This constant is used in the [[redirectToSignInWithAuthRequest]]
+ */
 export const DEFAULT_BLOCKSTACK_HOST = 'https://browser.blockstack.org/auth'
 
 /**
- * Non-exhaustive list of common permission scopes. 
+ * Non-exhaustive list of common permission scopes.
  */
 export const enum AuthScope {
   /**
@@ -23,8 +22,8 @@ export const enum AuthScope {
   store_write = 'store_write',
   /**
    * Publish data so that other users of the app can discover and interact with the user.
-   * The user's files stored on Gaia hub are made visible to others via the `apps` property in the 
-   * user’s `profile.json` file. 
+   * The user's files stored on Gaia hub are made visible to others via the `apps` property in the
+   * user’s `profile.json` file.
    */
   publish_data = 'publish_data',
   /**
@@ -33,29 +32,28 @@ export const enum AuthScope {
   email = 'email'
 }
 
-
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export const DEFAULT_SCOPE = [AuthScope.store_write]
 
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export const BLOCKSTACK_APP_PRIVATE_KEY_LABEL = 'blockstack-transit-private-key'
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export const BLOCKSTACK_DEFAULT_GAIA_HUB_URL = 'https://hub.blockstack.org'
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export const DEFAULT_CORE_NODE = 'https://core.blockstack.org'
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export const NAME_LOOKUP_PATH = '/v1/names'
 /**
-* @ignore
-*/
+ * @ignore
+ */
 export const LOCALSTORAGE_SESSION_KEY = 'blockstack-session'
