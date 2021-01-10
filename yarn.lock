@@ -950,10 +950,10 @@
   resolved "https://registry.yarnpkg.com/@blockstack/prettier-config/-/prettier-config-0.0.6.tgz#8a41cd378ba061b79770987f2a6ad0c92b64bd72"
   integrity sha512-ke0MdyblmoUqSJBEutsG8/6G7KAjCB+uOcgZHPJvJr4R+i5yRhT4GSe5nV/wREINuK0jj2GvaA6qlx4PQTKQUA==
 
-"@blockstack/rpc-client@^0.3.0-alpha.11":
-  version "0.3.0-alpha.19"
-  resolved "https://registry.yarnpkg.com/@blockstack/rpc-client/-/rpc-client-0.3.0-alpha.19.tgz#49fb03085e1dd1416c9c43661f4bead8f491403e"
-  integrity sha512-ZOlXko5wkptMgNCR5bZcoZdaFCL/tF+6yd8shBle+bMnR7Qfgo5+kl6gJ2C+yRmKvKZJAUuDk+bHSb23eLvk0Q==
+"@blockstack/rpc-client@^0.3.0-alpha.11", "@blockstack/rpc-client@^0.3.0-alpha.22":
+  version "0.3.0-alpha.22"
+  resolved "https://registry.yarnpkg.com/@blockstack/rpc-client/-/rpc-client-0.3.0-alpha.22.tgz#2e72f3d9ab734c0eed00a3ef3b2c1a2c12b0f232"
+  integrity sha512-pfIg0WYkCUZ/fbM9ic3dMf9n9dU3NAJrGLMHTXgxndQRktf8fWBSXOxA4PUuBFzVh4aDlfEGh0PWS4WPe/FRnA==
   dependencies:
     "@blockstack/stacks-transactions" "0.5.1"
     cross-fetch "^3.0.4"
@@ -3878,7 +3878,7 @@ bip174@^2.0.1:
   resolved "https://registry.yarnpkg.com/bip174/-/bip174-2.0.1.tgz#39cf8ca99e50ce538fb762589832f4481d07c254"
   integrity sha512-i3X26uKJOkDTAalYAp0Er+qGMDhrbbh2o93/xiPyAN2s25KrClSpe3VXo/7mNJoqA5qfko8rLS2l3RWZgYmjKQ==
 
-bip32@^2.0.4:
+bip32@2.0.6, bip32@^2.0.4:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/bip32/-/bip32-2.0.6.tgz#6a81d9f98c4cd57d05150c60d8f9e75121635134"
   integrity sha512-HpV5OMLLGTjSVblmrtYRfFFKuQB+GArM0+XP8HGWfJ5vxYBqo+DesvJwOdC2WJ3bCkZShGf0QIfoIpeomVzVdA==
@@ -4559,6 +4559,15 @@ cliui@^6.0.0:
     string-width "^4.2.0"
     strip-ansi "^6.0.0"
     wrap-ansi "^6.2.0"
+
+cliui@^7.0.2:
+  version "7.0.4"
+  resolved "https://registry.yarnpkg.com/cliui/-/cliui-7.0.4.tgz#a0265ee655476fc807aea9df3df8df7783808b4f"
+  integrity sha512-OcRE68cOsVMXp1Yvonl/fzkQOyjLSu/8bhPDfQt0e0/Eb283TKP20Fs2MqoPsr9SwA595rRCA+QMzYc9nBP+JQ==
+  dependencies:
+    string-width "^4.2.0"
+    strip-ansi "^6.0.0"
+    wrap-ansi "^7.0.0"
 
 clone-deep@^4.0.1:
   version "4.0.1"
@@ -5373,6 +5382,11 @@ detect-indent@^5.0.0:
   resolved "https://registry.yarnpkg.com/detect-indent/-/detect-indent-5.0.0.tgz#3871cc0a6a002e8c3e5b3cf7f336264675f06b9d"
   integrity sha1-OHHMCmoALow+Wzz38zYmRnXwa50=
 
+detect-indent@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/detect-indent/-/detect-indent-6.0.0.tgz#0abd0f549f69fc6659a254fe96786186b6f528fd"
+  integrity sha512-oSyFlqaTHCItVRGK5RmrmjB+CmaMOW7IaNA/kdxqhoa6d17j/5ce9O9eWXmV/KEdRwqpQA+Vqe8a8Bsybu4YnA==
+
 detect-newline@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/detect-newline/-/detect-newline-2.1.0.tgz#f41f1c10be4b00e87b5f13da680759f2c5bfd3e2"
@@ -5763,6 +5777,11 @@ escalade@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/escalade/-/escalade-3.1.0.tgz#e8e2d7c7a8b76f6ee64c2181d6b8151441602d4e"
   integrity sha512-mAk+hPSO8fLDkhV7V0dXazH5pDc6MrjBTPyD3VeKzxnVFjH1MIxbCdqGZB9O8+EwWakZs3ZCbDS4IpRt79V1ig==
+
+escalade@^3.1.1:
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/escalade/-/escalade-3.1.1.tgz#d8cfdc7000965c5a0174b4a82eaa5c0552742e40"
+  integrity sha512-k0er2gUkLf8O0zKJiAhmkTnJlTvINGv7ygDNPbeIsX/TJjGJZHuh9B2UxbsaEkmlEo9MfhrSzmhIlhRlI2GXnw==
 
 escape-html@~1.0.3:
   version "1.0.3"
@@ -6629,7 +6648,7 @@ fromentries@^1.2.0:
   resolved "https://registry.yarnpkg.com/fromentries/-/fromentries-1.2.1.tgz#64c31665630479bc993cd800d53387920dc61b4d"
   integrity sha512-Xu2Qh8yqYuDhQGOhD5iJGninErSfI9A3FrriD3tjUgV5VbJFeH8vfgZ9HnC6jWN80QDVNQK5vmxRAmEAp7Mevw==
 
-fs-extra@8.1.0, fs-extra@^8.1.0:
+fs-extra@8.1.0, fs-extra@^8.0.1, fs-extra@^8.1.0:
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-8.1.0.tgz#49d43c45a88cd9677668cb7be1b46efdb8d2e1c0"
   integrity sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g==
@@ -6722,7 +6741,7 @@ gensync@^1.0.0-beta.1:
   resolved "https://registry.yarnpkg.com/gensync/-/gensync-1.0.0-beta.1.tgz#58f4361ff987e5ff6e1e7a210827aa371eaac269"
   integrity sha512-r8EC6NO1sngH/zdD9fiRDLdcgnbayXah+mLgManTaIZJqEC1MZstmnox8KpnI2/fxQwrp5OpCOYWLp4rBl4Jcg==
 
-get-caller-file@^2.0.1:
+get-caller-file@^2.0.1, get-caller-file@^2.0.5:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-2.0.5.tgz#4f94412a82db32f36e3b0b9741f8a97feb031f7e"
   integrity sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==
@@ -7286,6 +7305,11 @@ ignore@^4.0.3, ignore@^4.0.6:
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-4.0.6.tgz#750e3db5862087b4737ebac8207ffd1ef27b25fc"
   integrity sha512-cyFDKrqc/YdcWFniJhzI42+AzS+gNwmUzOSFcRCQYwySuBBBy/KjuxWLZ/FHEH6Moq1NizMOBWyTcv8O4OZIMg==
+
+ignore@^5.0.4:
+  version "5.1.8"
+  resolved "https://registry.yarnpkg.com/ignore/-/ignore-5.1.8.tgz#f150a8b50a34289b33e22f5889abd4d8016f0e57"
+  integrity sha512-BMpfD7PpiETpBl/A6S498BaIJ6Y/ABT93ETbby2fP00v4EbvPBXWEoaR1UBPKs3iR53pJY7EtZk5KACI57i1Uw==
 
 import-fresh@^2.0.0:
   version "2.0.0"
@@ -10038,7 +10062,7 @@ npm-normalize-package-bin@^1.0.0, npm-normalize-package-bin@^1.0.1:
     semver "^5.6.0"
     validate-npm-package-name "^3.0.0"
 
-npm-packlist@^1.4.4:
+npm-packlist@^1.4.1, npm-packlist@^1.4.4:
   version "1.4.8"
   resolved "https://registry.yarnpkg.com/npm-packlist/-/npm-packlist-1.4.8.tgz#56ee6cc135b9f98ad3d51c1c95da22bbb9b2ef3e"
   integrity sha512-5+AZgwru5IevF5ZdnFglB5wNlHG1AOOuw28WhUq8/8emhBmLv6jX5by4WJCh7lW0uSYZYS6DXqIsyZVIXRZU9A==
@@ -13710,6 +13734,15 @@ wrap-ansi@^6.2.0:
     string-width "^4.1.0"
     strip-ansi "^6.0.0"
 
+wrap-ansi@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
+  integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
+  dependencies:
+    ansi-styles "^4.0.0"
+    string-width "^4.1.0"
+    strip-ansi "^6.0.0"
+
 wrappy@1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/wrappy/-/wrappy-1.0.2.tgz#b5243d8f3ec1aa35f1364605bc0d1036e30ab69f"
@@ -13826,6 +13859,24 @@ y18n@^4.0.0:
   resolved "https://registry.yarnpkg.com/y18n/-/y18n-4.0.0.tgz#95ef94f85ecc81d007c264e190a120f0a3c8566b"
   integrity sha512-r9S/ZyXu/Xu9q1tYlpsLIsa3EeLXXk0VwlxqTcFRfg9EhMW+17kbt9G0NrgCmhGb5vT2hyhJZLfDGx+7+5Uj/w==
 
+y18n@^5.0.5:
+  version "5.0.5"
+  resolved "https://registry.yarnpkg.com/y18n/-/y18n-5.0.5.tgz#8769ec08d03b1ea2df2500acef561743bbb9ab18"
+  integrity sha512-hsRUr4FFrvhhRH12wOdfs38Gy7k2FFzB9qgN9v3aLykRq0dRcdcpz5C9FxdS2NuhOrI/628b/KSTJ3rwHysYSg==
+
+yalc@1.0.0-pre.49:
+  version "1.0.0-pre.49"
+  resolved "https://registry.yarnpkg.com/yalc/-/yalc-1.0.0-pre.49.tgz#ec576c4abeb80181402df6711f20785bd3b7fc0d"
+  integrity sha512-7fTnwsX4qKnr2h1LVTLQzc9gosFrGnJcBRPnNGsM+3YJSLAjB+i8XnqmNptdktjyc4hOzI+XzN1Wp2kXvKAPxA==
+  dependencies:
+    chalk "^4.1.0"
+    detect-indent "^6.0.0"
+    fs-extra "^8.0.1"
+    glob "^7.1.4"
+    ignore "^5.0.4"
+    npm-packlist "^1.4.1"
+    yargs "^16.1.1"
+
 yallist@^2.1.2:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-2.1.2.tgz#1c11f9218f076089a47dd512f93c6699a6a81d52"
@@ -13869,6 +13920,11 @@ yargs-parser@^15.0.1:
   dependencies:
     camelcase "^5.0.0"
     decamelize "^1.2.0"
+
+yargs-parser@^20.2.2:
+  version "20.2.4"
+  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-20.2.4.tgz#b42890f14566796f85ae8e3a25290d205f154a54"
+  integrity sha512-WOkpgNhPTlE73h4VFAFsOnomJVaovO8VqLDzy5saChRBFQFBoMYirowyW+Q9HB4HFF4Z7VZTiG3iSzJJA29yRA==
 
 yargs@^13.2.2, yargs@^13.3.0, yargs@^13.3.2:
   version "13.3.2"
@@ -13919,6 +13975,19 @@ yargs@^15.0.2, yargs@^15.3.1:
     which-module "^2.0.0"
     y18n "^4.0.0"
     yargs-parser "^18.1.2"
+
+yargs@^16.1.1:
+  version "16.2.0"
+  resolved "https://registry.yarnpkg.com/yargs/-/yargs-16.2.0.tgz#1c82bf0f6b6a66eafce7ef30e376f49a12477f66"
+  integrity sha512-D1mvvtDG0L5ft/jGWkLpG1+m0eQxOfaBvTNELraWj22wSVUMWxZUvYgJYcKh6jGGIkJFhH4IZPQhR4TKpc8mBw==
+  dependencies:
+    cliui "^7.0.2"
+    escalade "^3.1.1"
+    get-caller-file "^2.0.5"
+    require-directory "^2.1.1"
+    string-width "^4.2.0"
+    y18n "^5.0.5"
+    yargs-parser "^20.2.2"
 
 yn@3.1.1:
   version "3.1.1"

@@ -87,7 +87,7 @@
     "@babel/compat-data": "^7.10.1",
     "@babel/plugin-proposal-optional-chaining": "^7.9.0",
     "@blockstack/eslint-config": "^1.0.5",
-    "@blockstack/rpc-client": "^0.3.0-alpha.11",
+    "@blockstack/rpc-client": "^0.3.0-alpha.22",
     "ajv": "^6.12.3",
     "bip32": "^2.0.4",
     "bip39": "^3.0.2",
