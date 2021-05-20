@@ -809,9 +809,9 @@ export class BlockstackNetwork {
    * @ignore
    */
   getFeeRate(): Promise<number> {
-    return fetchPrivate('https://bitcoinfees.earn.com/api/v1/fees/recommended')
+    return fetchPrivate('https://api.xverse.app/v1/fees/btc')
       .then(resp => resp.json())
-      .then(rates => Math.floor(rates.fastestFee))
+      .then(rates => Math.floor(rates.priority))
   }
 
   /**
