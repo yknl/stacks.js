@@ -195,7 +195,7 @@ test('getNamespacePrice', async () => {
       network
   };
 
-  expect(result).toEqual(new BN(10));
+  expect(result.toString()).toEqual('10');
   expect(callReadOnlyFunction).toHaveBeenCalledTimes(1);
   expect(callReadOnlyFunction).toHaveBeenCalledWith(expectedReadOnlyFunctionCallOptions);
 });
@@ -282,7 +282,7 @@ test('getNamePrice', async () => {
     network
   };
 
-  expect(result).toEqual(new BN(10));
+  expect(result.toString()).toEqual('10');
   expect(callReadOnlyFunction).toHaveBeenCalledTimes(1);
   expect(callReadOnlyFunction).toHaveBeenCalledWith(expectedReadOnlyFunctionCallOptions);
 });
